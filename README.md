@@ -1,6 +1,7 @@
-# Stats
+# F4HWN firmware port with FM Station Name support by steranian
 
-![Alt](https://repobeats.axiom.co/api/embed/ecdd86aa536b716f088339a0c5ee734558f78c28.svg "Repobeats analytics image")
+This is a fork of the armel/uv-k1-k5v3-firmware-custom with a small modification to display FM radio station names.
+FMラジオに局名を表示する機能を実装した、小さな修正版ファームウェアです。
 
 # F4HWN firmware port for the UV-K1 and UV-K5 V3 using the PY32F071 MCU
 
