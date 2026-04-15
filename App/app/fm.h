@@ -41,6 +41,15 @@ extern uint16_t          gFM_FrequencyDeviation;
 extern bool              gFM_FoundFrequency;
 extern uint16_t          gFM_RestoreCountdown_10ms;
 
+typedef struct {
+    uint16_t Frequency;
+    uint8_t FrequencyPost;
+    char Name[16];
+} FmStation_t;
+
+extern FmStation_t gFmNames[48];
+
+
 bool    FM_CheckValidChannel(uint8_t Channel);
 // returns first valid channel starting at Channel
 uint8_t FM_FindNextChannel(uint8_t Channel, uint8_t Direction);

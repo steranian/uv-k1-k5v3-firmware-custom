@@ -32,6 +32,8 @@
 void UI_DisplayFM(void)
 {
     char String[16] = {0};
+    char StationString[16] = {0};
+    char FreqString[16] = {0};
     char *pPrintStr = String;
     UI_DisplayClear();
 
@@ -83,8 +85,11 @@ void UI_DisplayFM(void)
     memset(String, 0, sizeof(String));
     if (gAskToSave || (gEeprom.FM_IsMrMode && gInputBoxIndex > 0)) {
         UI_GenerateChannelString(String, gFM_ChannelPosition);
+    UI_PrintString(String, 0, 127, 1, 10);
+
     } else if (gAskToDelete) {
         sprintf(String, "CH-%02u", gEeprom.FM_SelectedChannel + 1);
+    UI_PrintString(String, 0, 127, 1, 10);
     } else {
         if (gInputBoxIndex == 0) {
             sprintf(String, "%3d.%d", gEeprom.FM_FrequencyPlaying / 10, gEeprom.FM_FrequencyPlaying % 10);
@@ -94,11 +99,47 @@ void UI_DisplayFM(void)
         }
 
         UI_DisplayFrequency(String, 36, 1, gInputBoxIndex == 0);  // frequency
-        ST7565_BlitFullScreen();
-        return;
+        //ST7565_BlitFullScreen();
+        //return;
     }
 
-    UI_PrintString(String, 0, 127, 1, 10);
+    //UI_PrintString(String, 0, 127, 1, 10);
+
+    memset(StationString, 0, sizeof(StationString));
+    if (gFM_ScanState == FM_SCAN_OFF) {
+        if (gEeprom.FM_IsMrMode) {
+
+
+            /*
+            sprintf(StationString, "%3d.%1d %3d.%1d %d", 
+                gFmNames[1].Frequency , 
+                gFmNames[1].FrequencyPost, 
+                gEeprom.FM_FrequencyPlaying / 10, 
+                gEeprom.FM_FrequencyPlaying % 10,
+                strcmp(String, FreqString));
+            */
+            
+            for (uint8_t i = 0; i < 48; i++) {
+                if (gFmNames[i].Frequency == 0) break; // 前詰めなので0が出たら終了
+                
+                //if ( (gFmNames[i].Frequency == gEeprom.FM_FrequencyPlaying / 10) &&
+                //     (gFmNames[i].FrequencyPost  == gEeprom.FM_FrequencyPlaying % 10)) {
+                sprintf(FreqString, "%3d.%1d", 
+                    gFmNames[i].Frequency , 
+                    gFmNames[i].FrequencyPost);
+                if ( strcmp(String, FreqString)==0) {
+                    // 一致した局名を描画する処理
+                    //sprintf(String, "%s", gFmNames[i].Name);
+                    sprintf(StationString, "%s", gFmNames[i].Name);
+                    break;
+                }
+            }
+            
+            
+        }
+    }
+    //UI_PrintString(StationString, 0, 127, 4, 10);
+    UI_PrintStringSmallNormal(StationString, 0, 127, 5);
 
     ST7565_BlitFullScreen();
 }

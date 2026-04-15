@@ -183,15 +183,16 @@ void UI_DisplayWelcome(void)
 #ifdef ENABLE_FEAT_F4HWN
         UI_PrintStringSmallNormal(Version, 0, 128, 4);
 
-        UI_DrawLineBuffer(gFrameBuffer, 0, 35, 18, 35, 1);
-        gFrameBuffer[4][19] ^= 0x7F;
-        for (uint8_t x = 20; x < 108; x++)
+        //UI_DrawLineBuffer(gFrameBuffer, 0, 35, 18, 35, 1);
+        //gFrameBuffer[4][19] ^= 0x7F;
+        for (uint8_t x = 0; x < 128; x++)
+        //for (uint8_t x = 20; x < 108; x++)
         {
             gFrameBuffer[4][x] ^= 0xFF;
             gFrameBuffer[3][x] ^= 0x80;
         }
-        gFrameBuffer[4][108] ^= 0x7F;
-        UI_DrawLineBuffer(gFrameBuffer, 109, 35, 127, 35, 1);
+        //gFrameBuffer[4][108] ^= 0x7F;
+        //UI_DrawLineBuffer(gFrameBuffer, 109, 35, 127, 35, 1);
 
         #ifdef ENABLE_FEAT_F4HWN_MEM
             uint32_t ram_used   = 0;

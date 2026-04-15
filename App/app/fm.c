@@ -56,6 +56,45 @@ const uint8_t BUTTON_EVENT_LONG =  BUTTON_STATE_HELD;
 
 static void Key_FUNC(KEY_Code_t Key, uint8_t state);
 
+FmStation_t gFmNames[48];
+void FM_LoadStationNames(void); // 初期化関数
+
+void FM_LoadStationNames(void)
+{
+    // FMラジオで局名を表示するために、周波数と局名のl配列を作成
+    // FMラジオで保存できる局数は20までって決まってるので、配列のサイズも20
+    // FMラジオが起動されたときに、この関数を呼び出して、メモリから20局分の
+    // 周波数と局名の一覧をつくっておきます
+    // メモリの位置は、901 ～ 920 固定
+
+    uint8_t count = 0;
+    memset(gFmNames, 0, sizeof(gFmNames)); // 配列をクリア
+
+    for (uint16_t i = 900; i < 948; i++) { // チャンネルとしてｈ 901 から 920
+        uint32_t frequency;
+
+        // SETTINGS_FetchChannnel と SETTINGS_FetchChannelName という小便利そうな関数があったので利用
+        // 使っていいかどうかはわかんないけど、とりあえずやりたいことはできてる感じ
+
+        frequency = SETTINGS_FetchChannelFrequency(i);
+
+        //  へんな値が入ってないかチェック
+        if (frequency != 0xFFFFFFFF && frequency != 0) {
+            // xx.x Mhz なので桁数合わせ
+            gFmNames[count].Frequency = frequency / 100000;
+            gFmNames[count].FrequencyPost = (frequency / 10000) % 10;
+            
+            // 局名を取得
+            SETTINGS_FetchChannelName(gFmNames[count].Name, i);
+            
+            // 前詰めで格納していきます
+            count++;
+            if (count >= 20) break; // 配列がいっぱいになったら終了
+        }
+    }
+}
+
+
 bool FM_CheckValidChannel(uint8_t Channel)
 {
     return  Channel < ARRAY_SIZE(gFM_Channels) && 
@@ -634,6 +673,9 @@ void FM_Start(void)
     gFmRadioMode              = true;
     gFM_ScanState             = FM_SCAN_OFF;
     gFM_RestoreCountdown_10ms = 0;
+
+    // 追加：FM開始時に一度だけEEPROMから読み込む
+    FM_LoadStationNames();
 
     BK1080_Init(gEeprom.FM_FrequencyPlaying, gEeprom.FM_Band/*, gEeprom.FM_Space*/);
     // Disable UHF LNA, enable VHF LNA
