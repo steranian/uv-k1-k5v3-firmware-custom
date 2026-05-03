@@ -225,6 +225,10 @@ static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
         case KEY_4:
             HideFKeyIcon();
 
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+            return;
+#endif
+
             gBackup_CROSS_BAND_RX_TX  = gEeprom.CROSS_BAND_RX_TX;
             gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_OFF;     
 
@@ -258,10 +262,16 @@ static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
             break;
 
         case KEY_6:
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+            return;
+#endif
             ACTION_Power();
             break;
 
         case KEY_7:
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+            return;
+#endif
 #ifdef ENABLE_VOX
             ACTION_Vox();
 //#else
@@ -875,6 +885,13 @@ static void MAIN_Key_STAR(bool bKeyPressed, bool bKeyHeld)
         gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
         return;
     }
+
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+        ACTION_Scan(false);// toggle scanning
+
+        gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
+        return;
+#endif
     
     if (!gWasFKeyPressed) // pressed without the F-key
     {   

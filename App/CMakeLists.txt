@@ -207,6 +207,13 @@ enable_feature(ENABLE_FEAT_F4HWN_DEBUG)
 enable_feature(ENABLE_FEAT_F4HWN_MEM)
 enable_feature(ENABLE_FEAT_F4HWN_QRCODE)
 
+# ---- RECEIVE_ONLY_MODE ----
+enable_feature(ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE)
+# ---- DISPLAY FM RADIO STATION ----
+enable_feature(ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME)
+# ---- PTT BUTTON REMAP ----
+enable_feature(ENABLE_FEAT_STERANIAN_PTT_REMAP)
+
 # ---- DEBUGGING ----
 
 enable_feature(ENABLE_AGC_SHOW_DATA)
@@ -215,3 +222,5 @@ enable_feature(ENABLE_UART_RW_BK_REGS)
 # ---- COMPILER/LINKER OPTIONS ----
 
 enable_feature(ENABLE_SWD)
+
+

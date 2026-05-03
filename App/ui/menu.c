@@ -48,18 +48,29 @@ const t_menu_item MenuList[] =
 {
 //   text,          menu ID
     {"Step",        MENU_STEP          },
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     {"Power",       MENU_TXP           }, // was "TXP"
+#endif
     {"RxDCS",       MENU_R_DCS         }, // was "R_DCS"
     {"RxCTCS",      MENU_R_CTCS        }, // was "R_CTCS"
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     {"TxDCS",       MENU_T_DCS         }, // was "T_DCS"
     {"TxCTCS",      MENU_T_CTCS        }, // was "T_CTCS"
+#endif
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    {"Dir",         MENU_SFT_D         }, // was "SFT_D"
+    {"Offset",      MENU_OFFSET        }, // was "OFFSET"
+#else
     {"TxODir",      MENU_SFT_D         }, // was "SFT_D"
     {"TxOffs",      MENU_OFFSET        }, // was "OFFSET"
+#endif
     {"W/N",         MENU_W_N           },
 #ifndef ENABLE_FEAT_F4HWN
     {"Scramb",      MENU_SCR           }, // was "SCR"
 #endif
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     {"BusyCL",      MENU_BCL           }, // was "BCL"
+#endif
     {"Compnd",      MENU_COMPAND       },
     {"Mode",        MENU_AM            }, // was "AM"
 #ifdef ENABLE_FEAT_F4HWN
@@ -85,26 +96,40 @@ const t_menu_item MenuList[] =
     {"F2Shrt",      MENU_F2SHRT        },
     {"F2Long",      MENU_F2LONG        },
     {"M Long",      MENU_MLONG         },
+#ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
+    {"PTTsht",      MENU_PTTSHRT       },
+    //{"PTTlng",      MENU_PTTLONG       },
+#endif
 
     {"KeyLck",      MENU_AUTOLK        }, // was "AUTOLk"
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     {"TxTOut",      MENU_TOT           }, // was "TOT"
+#endif
     {"BatSav",      MENU_SAVE          }, // was "SAVE"
     {"BatTxt",      MENU_BAT_TXT       },
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     {"Mic",         MENU_MIC           },
     {"MicBar",      MENU_MIC_BAR       },
+#endif
     {"ChDisp",      MENU_MDF           }, // was "MDF"
     {"POnMsg",      MENU_PONMSG        },
     {"BLTime",      MENU_ABR           }, // was "ABR"
     {"BLMin",       MENU_ABR_MIN       },
     {"BLMax",       MENU_ABR_MAX       },
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    {"BLRx",        MENU_ABR_ON_TX_RX  },
+#else
     {"BLTxRx",      MENU_ABR_ON_TX_RX  },
+#endif
     {"Beep",        MENU_BEEP          },
 #ifdef ENABLE_VOICE
     {"Voice",       MENU_VOICE         },
 #endif
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     {"Roger",       MENU_ROGER         },
     {"STE",         MENU_STE           },
     {"RP STE",      MENU_RP_STE        },
+#endif
     {"1 Call",      MENU_1_CALL        },
 #ifdef ENABLE_ALARM
     {"AlarmT",      MENU_AL_MOD        },
@@ -112,15 +137,19 @@ const t_menu_item MenuList[] =
 #ifdef ENABLE_DTMF_CALLING
     {"ANI ID",      MENU_ANI_ID        },
 #endif
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     {"UPCode",      MENU_UPCODE        },
     {"DWCode",      MENU_DWCODE        },
     {"PTT ID",      MENU_PTT_ID        },
     {"D ST",        MENU_D_ST          },
+#endif
 #ifdef ENABLE_DTMF_CALLING
     {"D Resp",      MENU_D_RSP         },
     {"D Hold",      MENU_D_HOLD        },
 #endif
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     {"D Prel",      MENU_D_PRE         },
+#endif
 #ifdef ENABLE_DTMF_CALLING
     {"D Decd",      MENU_D_DCD         },
     {"D List",      MENU_D_LIST        },
@@ -131,7 +160,9 @@ const t_menu_item MenuList[] =
         {"AM Fix",      MENU_AM_FIX        },
     #endif
 #endif
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     {"VOX",         MENU_VOX           },
+#endif 
 #ifdef ENABLE_FEAT_F4HWN
     {"SysInf",      MENU_VOL           }, // was "VOL"
 #else
@@ -140,10 +171,12 @@ const t_menu_item MenuList[] =
     {"RxMode",      MENU_TDR           },
     {"Sql",         MENU_SQL           },
 #ifdef ENABLE_FEAT_F4HWN
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     {"SetPwr",      MENU_SET_PWR       },
     {"SetPTT",      MENU_SET_PTT       },
     {"SetTOT",      MENU_SET_TOT       },
     {"SetEOT",      MENU_SET_EOT       },
+#endif
     {"SetCtr",      MENU_SET_CTR       },
     {"SetInv",      MENU_SET_INV       },
     {"SetLck",      MENU_SET_LCK       },
@@ -177,7 +210,9 @@ const t_menu_item MenuList[] =
     {"Tx 350",      MENU_350TX         }, // was "350TX"
     {"Tx 500",      MENU_500TX         }, // was "500TX"
 #endif
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     {"350 En",      MENU_350EN         }, // was "350EN"
+#endif
 #ifndef ENABLE_FEAT_F4HWN
     {"ScraEn",      MENU_SCREN         }, // was "SCREN"
 #endif
@@ -225,11 +260,27 @@ const char gSubMenu_OFF_ON[][4] =
     "ON"
 };
 
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+const char gSubMenu_OFF_ONLY[][4] =
+{
+    "OFF"
+};
+#endif
+
 const char gSubMenu_NA[4] =
 {
     "N/A"
 };
 
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+const char* const gSubMenu_RXMode[] =
+{
+    "MAIN\nONLY",       // TX and RX on main only
+    "DUAL\nRESPOND", // Watch both and respond
+    "CROSS\nBAND",      // TX on main, RX on secondary
+    "DUAL\nWATCH"  // always TX on main, but RX on both
+};
+#else
 const char* const gSubMenu_RXMode[] =
 {
     "MAIN\nONLY",       // TX and RX on main only
@@ -237,6 +288,7 @@ const char* const gSubMenu_RXMode[] =
     "CROSS\nBAND",      // TX on main, RX on secondary
     "MAIN TX\nDUAL RX"  // always TX on main, but RX on both
 };
+#endif
 
 #ifdef ENABLE_VOICE
     const char gSubMenu_VOICE[][4] =
@@ -329,6 +381,18 @@ const char * const gSubMenu_F_LOCK[] =
     "UNLOCK\nALL",
 };
 
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+// disable TX related option
+const char gSubMenu_RX_TX[][6] =
+{
+    "OFF",
+    "RX"
+};
+//    "OFF",  // 0:Off
+//            // 1->n/a:TX
+//    "RX"    // 2->1:RX
+//            // 3->n/a:TX/RX
+#else
 const char gSubMenu_RX_TX[][6] =
 {
     "OFF",
@@ -336,6 +400,7 @@ const char gSubMenu_RX_TX[][6] =
     "RX",
     "TX/RX"
 };
+#endif
 
 const char gSubMenu_BAT_TXT[][8] =
 {
@@ -458,24 +523,34 @@ const t_sidefunction gSubMenu_SIDEFUNCTIONS[] =
 #ifdef ENABLE_FLASHLIGHT
     {"FLASH\nLIGHT",    ACTION_OPT_FLASHLIGHT},
 #endif
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     {"POWER",           ACTION_OPT_POWER},
+#endif
     {"MONITOR",         ACTION_OPT_MONITOR},
     {"SCAN",            ACTION_OPT_SCAN},
 #ifdef ENABLE_VOX
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     {"VOX",             ACTION_OPT_VOX},
-#endif
+#endif // RECEIVE_ONLY_MODE
+#endif // VOX
 #ifdef ENABLE_ALARM
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     {"ALARM",           ACTION_OPT_ALARM},
+#endif // RECEIVE_ONLY_MODE
 #endif
 #ifdef ENABLE_FMRADIO
     {"FM RADIO",        ACTION_OPT_FM},
 #endif
 #ifdef ENABLE_TX1750
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     {"1750Hz",          ACTION_OPT_1750},
+#endif // RECEIVE_ONLY_MOCE
 #endif
 #ifdef ENABLE_REGA
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     {"REGA\nALARM",     ACTION_OPT_REGA_ALARM},
     {"REGA\nTEST",      ACTION_OPT_REGA_TEST},
+#endif // RECEIVE_ONLY_MODE
 #endif
     {"LOCK\nKEYPAD",    ACTION_OPT_KEYLOCK},
     {"VFO A\nVFO B",    ACTION_OPT_A_B},
@@ -487,14 +562,18 @@ const t_sidefunction gSubMenu_SIDEFUNCTIONS[] =
 #ifdef ENABLE_FEAT_F4HWN
     {"RX MODE",         ACTION_OPT_RXMODE},
     {"MAIN ONLY",       ACTION_OPT_MAINONLY},
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     {"PTT",             ACTION_OPT_PTT},
+#endif
     {"WIDE\nNARROW",    ACTION_OPT_WN},
     {"MUTE",            ACTION_OPT_MUTE},
     #ifdef ENABLE_FEAT_F4HWN_AUDIO
         {"RxA",            ACTION_OPT_RXA},
     #endif
     #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
+    #ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
         {"POWER\nHIGH",    ACTION_OPT_POWER_HIGH},
+    #endif // RECEIVE_ONLY_MODE
         {"REMOVE\nOFFSET",  ACTION_OPT_REMOVE_OFFSET},
     #endif
 #endif
@@ -737,6 +816,7 @@ void UI_DisplayMenu(void)
             break;
         }
 
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
         case MENU_TXP:
             if(gSubMenuSelection == 0)
             {
@@ -747,9 +827,12 @@ void UI_DisplayMenu(void)
                 sprintf(String, "%s\n%sW", gSubMenu_TXP[gSubMenuSelection], gSubMenu_SET_PWR[gSubMenuSelection - 1]);
             }
             break;
+#endif
 
         case MENU_R_DCS:
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
         case MENU_T_DCS:
+#endif
             if (gSubMenuSelection == 0)
                 strcpy(String, gSubMenu_OFF_ON[0]);
             else if (gSubMenuSelection < 105)
@@ -759,7 +842,9 @@ void UI_DisplayMenu(void)
             break;
 
         case MENU_R_CTCS:
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
         case MENU_T_CTCS:
+#endif
         {
             if (gSubMenuSelection == 0)
                 strcpy(String, gSubMenu_OFF_ON[0]);
@@ -805,6 +890,8 @@ void UI_DisplayMenu(void)
             break;
 #endif
 
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+
         case MENU_VOX:
             #ifdef ENABLE_VOX
                 sprintf(String, gSubMenuSelection == 0 ? gSubMenu_OFF_ON[0] : "%u", gSubMenuSelection);
@@ -812,6 +899,7 @@ void UI_DisplayMenu(void)
                 strcpy(String, gSubMenu_NA);
             #endif
             break;
+#endif
 
         case MENU_ABR:
             if(gSubMenuSelection == 0)
@@ -871,7 +959,6 @@ void UI_DisplayMenu(void)
         case MENU_ABR_ON_TX_RX:
             strcpy(String, gSubMenu_RX_TX[gSubMenuSelection]);
             break;
-
         #ifndef ENABLE_FEAT_F4HWN
             #ifdef ENABLE_AM_FIX
                 case MENU_AM_FIX:
@@ -893,7 +980,9 @@ void UI_DisplayMenu(void)
         case MENU_200TX:
         case MENU_500TX:
 #endif
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
         case MENU_350EN:
+#endif
 #ifndef ENABLE_FEAT_F4HWN
         case MENU_SCREN:
 #endif
@@ -1126,9 +1215,11 @@ void UI_DisplayMenu(void)
             strcpy(String, gSubMenu_PONMSG[gSubMenuSelection]);
             break;
 
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
         case MENU_ROGER:
             strcpy(String, gSubMenu_ROGER[gSubMenuSelection]);
             break;
+#endif
 
         case MENU_VOL: {
             // SysInf is paginated. Pages appear in this order, only when their
@@ -1273,6 +1364,10 @@ void UI_DisplayMenu(void)
         case MENU_F2SHRT:
         case MENU_F2LONG:
         case MENU_MLONG:
+#ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
+        case MENU_PTTSHRT:
+        //case MENU_PTTLONG:
+#endif
             strcpy(String, gSubMenu_SIDEFUNCTIONS[gSubMenuSelection].name);
             break;
 
@@ -1335,7 +1430,11 @@ void UI_DisplayMenu(void)
             }
             else
             {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+                strcpy(String, "Locked");
+#else
                 strcpy(String, gSubMenu_OFF_ON[gSubMenuSelection]);
+#endif
             }
             break;
 

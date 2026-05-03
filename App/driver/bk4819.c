@@ -210,6 +210,51 @@ uint16_t BK4819_ReadRegister(BK4819_REGISTER_t Register)
 
 void BK4819_WriteRegister(BK4819_REGISTER_t Register, uint16_t Data)
 {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    switch (Register) {
+        case BK4819_REG_30:
+            // 送信系のビットを強制OFF
+            // PA_GAIN(電力増幅), TX_DSP(送信信号処理), MIC_ADC(音声入力)
+            Data &= ~(BK4819_REG_30_ENABLE_PA_GAIN | 
+                      BK4819_REG_30_ENABLE_TX_DSP | 
+                      BK4819_REG_30_ENABLE_MIC_ADC);
+            break;
+
+        case BK4819_REG_36:
+            // 送信時の周波数偏移（偏差）を強制的にゼロにする
+            // 万が一PAが動いても変調が乗らなくなる
+            Data = 0; 
+            break;
+
+        case BK4819_REG_51:
+            // 送信用シリアルインターフェースや追加のPA制御
+            // 送信に関わるデジタルブロックを無効化
+            Data &= ~0x0001; // TX_EN ビットなどの無効化
+            break;
+
+        case BK4819_REG_29:
+            // TX信号のパス選択
+            // 送信用DACへの入力を遮断
+            Data &= ~0x0030; 
+            break;
+
+        case BK4819_REG_3F:
+            // PA（パワーアンプ）の出力ランプ制御
+            // 出力波形の上昇特性をゼロに固定し、物理的な出力を阻止
+            Data = 0;
+            break;
+
+        case BK4819_REG_02:
+            // 送信/受信のモード切り替えレジスタ
+            // もし「送信モード(TX)」を指すビットが書き込まれようとしたら強制的に「受信モード」へ
+            Data &= ~0x0001; 
+            break;
+
+        default:
+            break;
+    }
+#endif
+
     CS_Release();
     SCL_Reset();
 
@@ -698,6 +743,10 @@ void BK4819_SetFilterBandwidth(const BK4819_FilterBandwidth_t Bandwidth, const b
 
 void BK4819_SetupPowerAmplifier(const uint8_t bias, const uint32_t frequency)
 {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    return;
+#endif
+
     // REG_36 <15:8> 0 PA Bias output 0 ~ 3.2V
     //               255 = 3.2V
     //                 0 = 0V
@@ -923,7 +972,11 @@ void BK4819_SetCompander(const unsigned int mode)
     //
     // <6:0>   64 Compress (AF Tx) noise point (dB)
     //
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    const uint16_t compress_ratio   = 0;
+#else
     const uint16_t compress_ratio    = (mode == 1 || mode >= 3) ? 2 : 0;  // 2:1
+#endif
     const uint16_t compress_0dB      = 86;
     const uint16_t compress_noise_dB = 64;
 //  AB40  10 1010110 1000000
@@ -1160,6 +1213,10 @@ void BK4819_ExitBypass(void)
 
 void BK4819_PrepareTransmit(void)
 {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    return;
+#endif
+
     BK4819_ExitBypass();
     BK4819_ExitTxMute();
     BK4819_TxOn_Beep();
@@ -1167,6 +1224,10 @@ void BK4819_PrepareTransmit(void)
 
 void BK4819_TxOn_Beep(void)
 {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    return;
+#endif
+
     BK4819_WriteRegister(BK4819_REG_37, 0x1D0F);
     BK4819_WriteRegister(BK4819_REG_52, 0x028F);
     BK4819_WriteRegister(BK4819_REG_30, 0x0000);
@@ -1226,6 +1287,12 @@ void BK4819_Conditional_RX_TurnOn_and_GPIO6_Enable(void)
 
 void BK4819_EnterDTMF_TX(bool bLocalLoopback)
 {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    if (!bLocalLoopback) {
+        return;
+    }
+#endif
+
     BK4819_EnableDTMF();
     BK4819_EnterTxMute();
     BK4819_SetAF(bLocalLoopback ? BK4819_AF_BEEP : BK4819_AF_MUTE);
@@ -1252,6 +1319,11 @@ void BK4819_ExitDTMF_TX(bool bKeep)
 
 void BK4819_EnableTXLink(void)
 {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    return;
+#endif
+
+
     BK4819_WriteRegister(BK4819_REG_30,
         BK4819_REG_30_ENABLE_VCO_CALIB |
         BK4819_REG_30_ENABLE_UNKNOWN   |
@@ -1267,6 +1339,9 @@ void BK4819_EnableTXLink(void)
 
 void BK4819_PlayDTMF(char Code)
 {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    return;
+#endif
 
     struct DTMF_TonePair {
         uint16_t tone1;
@@ -1311,6 +1386,10 @@ void BK4819_PlayDTMF(char Code)
 
 void BK4819_PlayDTMFString(const char *pString, bool bDelayFirst, uint16_t FirstCodePersistTime, uint16_t HashCodePersistTime, uint16_t CodePersistTime, uint16_t CodeInternalTime)
 {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    return;
+#endif
+
     unsigned int i;
 
     if (pString == NULL)
@@ -1336,6 +1415,10 @@ void BK4819_PlayDTMFString(const char *pString, bool bDelayFirst, uint16_t First
 
 void BK4819_TransmitTone(bool bLocalLoopback, uint32_t Frequency)
 {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    return;
+#endif
+
     BK4819_EnterTxMute();
 
     // REG_70
@@ -1371,6 +1454,10 @@ void BK4819_TransmitTone(bool bLocalLoopback, uint32_t Frequency)
 
 void BK4819_GenTail(uint8_t Tail)
 {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    return;
+#endif
+
     // REG_52
     //
     // <15>    0 Enable 120/180/240 degree shift CTCSS or 134.4Hz Tail when CDCSS mode
@@ -1673,6 +1760,10 @@ uint8_t BK4819_GetCTCType(void)
 
 void BK4819_SendFSKData(uint16_t *pData)
 {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    return;
+#endif
+
     unsigned int i;
     uint8_t Timeout = 200;
 
@@ -1721,6 +1812,10 @@ void BK4819_PrepareFSKReceive(void)
 
 static void BK4819_PlayRogerNormal(void)
 {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    return;
+#endif
+
     #if 0
         const uint32_t tone1_Hz = 500;
         const uint32_t tone2_Hz = 700;
@@ -1758,6 +1853,11 @@ static void BK4819_PlayRogerNormal(void)
 
 void BK4819_PlayRogerMDC(void)
 {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    return;
+#endif
+
+
     struct reg_value {
         BK4819_REGISTER_t reg;
         uint16_t value;
@@ -1806,6 +1906,10 @@ void BK4819_PlayRogerMDC(void)
 
 void BK4819_PlayRoger(void)
 {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    return;
+#endif
+
     if (gEeprom.ROGER == ROGER_MODE_ROGER) {
         BK4819_PlayRogerNormal();
     } else if (gEeprom.ROGER == ROGER_MODE_MDC) {
@@ -1831,6 +1935,10 @@ void BK4819_SetScrambleFrequencyControlWord(uint32_t Frequency)
 
 void BK4819_PlayDTMFEx(bool bLocalLoopback, char Code)
 {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    return;
+#endif
+ 
     BK4819_EnableDTMF();
     BK4819_EnterTxMute();
 

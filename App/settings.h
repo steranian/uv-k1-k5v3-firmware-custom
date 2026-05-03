@@ -303,6 +303,11 @@ typedef struct {
     uint8_t               S0_LEVEL;
     uint8_t               S9_LEVEL;
 #endif
+
+#ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
+    uint8_t               KEY_PTT_SHORT_PRESS_ACTION;
+    uint8_t               KEY_PTT_LONG_PRESS_ACTION;
+#endif
 } EEPROM_Config_t;
 
 extern EEPROM_Config_t gEeprom;

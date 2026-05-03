@@ -2002,6 +2002,12 @@ static void ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
     }
 
     bool bFlag = false;
+#ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
+if (Key == KEY_PTT) {
+        ACTION_Handle(Key, bKeyPressed, bKeyHeld);
+        goto Skip;
+    }
+#else
     if (Key == KEY_PTT) {
         if (gPttWasPressed) {
             bFlag = bKeyHeld;
@@ -2019,6 +2025,7 @@ static void ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
             gPttWasReleased = false;
         }
     }
+#endif
 
 #ifdef ENABLE_FEAT_F4HWN // For F + SIDE1 or F + SIDE2
     if (gWasFKeyPressed && (Key == KEY_PTT || Key == KEY_EXIT)) { 
@@ -2041,8 +2048,13 @@ static void ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
             char Code;
 
             if (Key == KEY_PTT) {
+#ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
+                // 保険、なんらかの理由でここにきてもスキップ
+                goto Skip;
+#else
                 GENERIC_Key_PTT(bKeyPressed);
                 goto Skip;
+#endif
             }
 
             if (Key == KEY_SIDE2) { // transmit 1750Hz tone

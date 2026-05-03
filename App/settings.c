@@ -172,6 +172,16 @@ void SETTINGS_InitEEPROM(void)
     gEeprom.BATTERY_SAVE          = (Data[3] < 6) ? Data[3] : 4;
     gEeprom.DUAL_WATCH            = (Data[4] < 3) ? Data[4] : DUAL_WATCH_CHAN_A;
     gEeprom.BACKLIGHT_TIME        = (Data[5] < 62) ? Data[5] : 12;
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    gEeprom.TAIL_TONE_ELIMINATION = false;
+
+    #ifdef ENABLE_FEAT_F4HWN_NARROWER
+        gSetting_set_nfm = (Data[6] >> 1) & 0x01;
+        #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
+            gEeprom.VFO_OPEN = ((Data[6] >> 2) & 0x01) != 0 ? true : true;
+        #endif
+    #endif
+#else
     #ifdef ENABLE_FEAT_F4HWN_NARROWER
         gEeprom.TAIL_TONE_ELIMINATION = Data[6] & 0x01;
         gSetting_set_nfm = (Data[6] >> 1) & 0x01;
@@ -181,7 +191,7 @@ void SETTINGS_InitEEPROM(void)
     #else
         gEeprom.TAIL_TONE_ELIMINATION = (Data[6] < 2) ? Data[6] : false;
     #endif
-
+#endif
     #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
         gEeprom.CURRENT_STATE =  Data[7]        & 0x07;   // bits 0..2
         gEeprom.CURRENT_LIST  = (Data[7] >> 3)  & 0x1F;   // bits 3..7
@@ -291,7 +301,11 @@ gEeprom.FreqChannel[1]   = IS_FREQ_CHANNEL(Data16[5]) ? Data16[5] : (FREQ_CHANNE
     #ifdef ENABLE_ALARM
         gEeprom.ALARM_MODE                 = (Data[0] <  2) ? Data[0] : true;
     #endif
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    gEeprom.ROGER                          = ROGER_MODE_OFF;
+#else
     gEeprom.ROGER                          = (Data[1] <  3) ? Data[1] : ROGER_MODE_OFF;
+#endif
     gEeprom.REPEATER_TAIL_TONE_ELIMINATION = (Data[2] < 11) ? Data[2] : 0;
     gEeprom.TX_VFO                         = (Data[3] <  2) ? Data[3] : 0;
     gEeprom.BATTERY_TYPE                   = (Data[4] < BATTERY_TYPE_UNKNOWN) ? Data[4] : BATTERY_TYPE_1600_MAH;
@@ -357,7 +371,11 @@ gEeprom.FreqChannel[1]   = IS_FREQ_CHANNEL(Data16[5]) ? Data16[5] : (FREQ_CHANNE
 
     // 0F40..0F47
     PY25Q16_ReadBuffer(0x00A150, Data, 8);
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    gSetting_F_LOCK            = F_LOCK_ALL;
+#else
     gSetting_F_LOCK            = (Data[0] < F_LOCK_LEN) ? Data[0] : F_LOCK_DEF;
+#endif
 #ifndef ENABLE_FEAT_F4HWN
     gSetting_350TX             = (Data[1] < 2) ? Data[1] : false;  // was true
 #endif
@@ -368,7 +386,11 @@ gEeprom.FreqChannel[1]   = IS_FREQ_CHANNEL(Data16[5]) ? Data16[5] : (FREQ_CHANNE
     gSetting_200TX             = (Data[3] < 2) ? Data[3] : false;
     gSetting_500TX             = (Data[4] < 2) ? Data[4] : false;
 #endif
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    gSetting_350EN             = false;
+#else
     gSetting_350EN             = (Data[5] < 2) ? Data[5] : true;
+#endif
 #ifdef ENABLE_FEAT_F4HWN
     gSetting_ScrambleEnable    = false;
 #else
@@ -454,7 +476,11 @@ gEeprom.FreqChannel[1]   = IS_FREQ_CHANNEL(Data16[5]) ? Data16[5] : (FREQ_CHANNE
         // 1FF0..0x1FF7
         // TODO: address TBD
         PY25Q16_ReadBuffer(0x00A158, Data, 8);
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+        gSetting_set_pwr = 0;
+#else
         gSetting_set_pwr = (((Data[7] & 0xF0) >> 4) < 7) ? ((Data[7] & 0xF0) >> 4) : 0;
+#endif
         gSetting_set_ptt = (((Data[7] & 0x0F)) < 2) ? ((Data[7] & 0x0F)) : 0;
 
         gSetting_set_tot = (((Data[6] & 0xF0) >> 4) < 4) ? ((Data[6] & 0xF0) >> 4) : 0;
@@ -503,6 +529,17 @@ gEeprom.FreqChannel[1]   = IS_FREQ_CHANNEL(Data16[5]) ? Data16[5] : (FREQ_CHANNE
         gSetting_set_ptt_session = gSetting_set_ptt;
         gEeprom.KEY_LOCK_PTT = gSetting_set_lck;
     #endif
+
+#ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
+    // 0x00A170 以降の自由領域から読み出す
+    PY25Q16_ReadBuffer(0x00A170, Data, 2); 
+
+    // 短押し設定 (デフォルトは ACTION_OPT_NONE または MONITOR 等)
+    gEeprom.KEY_PTT_SHORT_PRESS_ACTION = (Data[0] < ACTION_OPT_LEN) ? Data[0] : ACTION_OPT_NONE;
+
+    // 長押し設定 (デフォルトは ACTION_OPT_SCAN 等)
+    gEeprom.KEY_PTT_LONG_PRESS_ACTION  = (Data[1] < ACTION_OPT_LEN) ? Data[1] : ACTION_OPT_NONE;
+#endif
 }
 
 void SETTINGS_LoadCalibration(void)
@@ -937,7 +974,11 @@ void SETTINGS_SaveSettings(void)
 
     // 0x0F40
     State = SecBuf;
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    State[0]  = F_LOCK_ALL;
+#else
     State[0]  = gSetting_F_LOCK;
+#endif
 #ifndef ENABLE_FEAT_F4HWN
     State[1]  = gSetting_350TX;
 #endif
@@ -1023,6 +1064,18 @@ void SETTINGS_SaveSettings(void)
 #ifdef ENABLE_FEAT_F4HWN_VOL
     SETTINGS_WriteCurrentVol();
 #endif
+
+#ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
+    // PTT設定保存用のバッファ（2バイト）
+    memset(SecBuf, 0xff, 2); 
+    SecBuf[0] = gEeprom.KEY_PTT_SHORT_PRESS_ACTION;
+    SecBuf[1] = gEeprom.KEY_PTT_LONG_PRESS_ACTION;
+
+    // 0x00A170 へ書き込む
+    PY25Q16_WriteBuffer(0x00A170, SecBuf, 2, false);
+#endif
+
+
 }
 
 void SETTINGS_SaveChannel(uint16_t Channel, uint8_t VFO, const VFO_Info_t *pVFO, uint8_t Mode)

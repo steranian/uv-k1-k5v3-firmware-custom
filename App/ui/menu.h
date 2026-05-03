@@ -55,9 +55,9 @@ enum
     MENU_SAVE,
     MENU_VOX,
     MENU_ABR,
-    MENU_ABR_ON_TX_RX,
     MENU_ABR_MIN,
     MENU_ABR_MAX,
+    MENU_ABR_ON_TX_RX,
     MENU_TDR,
     MENU_BEEP,
 #ifdef ENABLE_VOICE
@@ -116,8 +116,11 @@ enum
     MENU_350TX,
     MENU_500TX,
 #endif
+
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     MENU_350EN,
-#ifndef ENABLE_FEAT_F4HWN
+#endif
+    #ifndef ENABLE_FEAT_F4HWN
     MENU_SCREN,
 #endif
 #ifdef ENABLE_F_CAL_MENU
@@ -160,6 +163,10 @@ enum
     MENU_F2SHRT,
     MENU_F2LONG,
     MENU_MLONG,
+#ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
+    MENU_PTTSHRT,
+    //MENU_PTTLONG,
+#endif
     MENU_BATTYP
 };
 
@@ -212,7 +219,11 @@ extern const char* const gSubMenu_PTT_ID[5];
 extern const char        gSubMenu_ROGER[3][6];
 extern const char        gSubMenu_RESET[2][4];
 extern const char* const gSubMenu_F_LOCK[F_LOCK_LEN];
-extern const char        gSubMenu_RX_TX[4][6];
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    extern const char        gSubMenu_RX_TX[2][6];
+#else
+    extern const char        gSubMenu_RX_TX[4][6];
+#endif
 extern const char        gSubMenu_BAT_TXT[3][8];
 extern const char        gSubMenu_BATTYP[5][12];
 

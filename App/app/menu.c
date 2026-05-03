@@ -246,7 +246,9 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
         case MENU_200TX:
         case MENU_500TX:
 #endif
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
         case MENU_350EN:
+#endif
 #ifndef ENABLE_FEAT_F4HWN
         case MENU_SCREN:
 #endif
@@ -381,6 +383,10 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
         case MENU_F2SHRT:
         case MENU_F2LONG:
         case MENU_MLONG:
+#ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
+        case MENU_PTTSHRT:
+        //case MENU_PTTLONG:
+#endif
             //*pMin = 0;
             *pMax = gSubMenu_SIDEFUNCTIONS_size-1;
             break;
@@ -665,7 +671,13 @@ void MENU_AcceptSetting(void)
             break;
 
         case MENU_ABR_ON_TX_RX:
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+            // UIで 0(OFF) を選んだら 0(OFF) を代入
+            // UIで 1(RX)  を選んだら 2(本来のRXのインデックス) を代入
+            gSetting_backlight_on_tx_rx = (gSubMenuSelection == 0) ? 0 : 2;
+#else
             gSetting_backlight_on_tx_rx = gSubMenuSelection;
+#endif
             break;
 
         case MENU_TDR:
@@ -738,7 +750,13 @@ void MENU_AcceptSetting(void)
         #endif
 
         case MENU_COMPAND:
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+            // UIで 0(OFF) を選んだら 0(OFF) を代入
+            // UIで 1(RX)  を選んだら 2(本来のRXのインデックス) を代入
+            gTxVfo->Compander = (gSubMenuSelection == 0) ? 0 : 2;
+#else
             gTxVfo->Compander = gSubMenuSelection;
+#endif
             SETTINGS_UpdateChannel(gTxVfo->CHANNEL_SAVE, gTxVfo, true, false, true);
             gVfoConfigureMode = VFO_CONFIGURE;
             gFlagResetVfos    = true;
@@ -867,6 +885,10 @@ void MENU_AcceptSetting(void)
 #endif
 
         case MENU_F_LOCK: {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+            gSetting_F_LOCK = F_LOCK_ALL;
+            SETTINGS_ResetTxLock();
+#else
             if(gSubMenuSelection == F_LOCK_NONE) { // select 10 times to enable
                 gUnlockAllTxConfCnt++;
 #ifdef ENABLE_FEAT_F4HWN
@@ -886,6 +908,7 @@ void MENU_AcceptSetting(void)
                 SETTINGS_ResetTxLock();
             }
             #endif
+#endif
             break;
         }
 #ifndef ENABLE_FEAT_F4HWN
@@ -897,11 +920,13 @@ void MENU_AcceptSetting(void)
             gSetting_500TX = gSubMenuSelection;
             break;
 #endif
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
         case MENU_350EN:
             gSetting_350EN       = gSubMenuSelection;
             gVfoConfigureMode    = VFO_CONFIGURE_RELOAD;
             gFlagResetVfos       = true;
             break;
+#endif
 #ifndef ENABLE_FEAT_F4HWN
         case MENU_SCREN:
             gSetting_ScrambleEnable = gSubMenuSelection;
@@ -940,6 +965,19 @@ void MENU_AcceptSetting(void)
         case MENU_F2SHRT:
         case MENU_F2LONG:
         case MENU_MLONG:
+#ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
+        case MENU_PTTSHRT:
+        //case MENU_PTTLONG:
+            {
+                uint8_t * fun[]= {
+                    &gEeprom.KEY_1_SHORT_PRESS_ACTION,
+                    &gEeprom.KEY_1_LONG_PRESS_ACTION,
+                    &gEeprom.KEY_2_SHORT_PRESS_ACTION,
+                    &gEeprom.KEY_2_LONG_PRESS_ACTION,
+                    &gEeprom.KEY_M_LONG_PRESS_ACTION,
+                    &gEeprom.KEY_PTT_SHORT_PRESS_ACTION,
+                    &gEeprom.KEY_PTT_LONG_PRESS_ACTION};
+#else
             {
                 uint8_t * fun[]= {
                     &gEeprom.KEY_1_SHORT_PRESS_ACTION,
@@ -947,6 +985,7 @@ void MENU_AcceptSetting(void)
                     &gEeprom.KEY_2_SHORT_PRESS_ACTION,
                     &gEeprom.KEY_2_LONG_PRESS_ACTION,
                     &gEeprom.KEY_M_LONG_PRESS_ACTION};
+#endif
                 *fun[UI_MENU_GetCurrentMenuId()-MENU_F1SHRT] = gSubMenu_SIDEFUNCTIONS[gSubMenuSelection].id;
             }
             break;
@@ -1020,7 +1059,11 @@ void MENU_AcceptSetting(void)
             gSetting_set_tmr = gSubMenuSelection;
             break;
         case MENU_TX_LOCK:
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+            gTxVfo->TX_LOCK = 1; // Off:0 On:1
+#else
             gTxVfo->TX_LOCK = gSubMenuSelection;
+#endif
             gRequestSaveChannel       = 1;
             return;
 #endif
@@ -1188,7 +1231,32 @@ void MENU_ShowCurrentSetting(void)
             break;
 
         case MENU_ABR_ON_TX_RX:
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+            // gSetting_backlight_on_tx_rx <-> gSubMenuSelection
+            //  0:off -> 0:off
+            //  1:Tx -> 0:off (invalid)
+            //  2:Rx -> 1:RX
+            //  3:Tx/Rx -> 0:off (invalid)
+            if (gSetting_backlight_on_tx_rx == 0) {
+                gSubMenuSelection = 0;
+            }
+            else if (gSetting_backlight_on_tx_rx == 1 || gSetting_backlight_on_tx_rx == 3) {
+                // invalid bltxrx -> set to OFF:0
+                gSubMenuSelection = 0;
+                gSetting_backlight_on_tx_rx = 0;
+            }
+            else if (gSetting_backlight_on_tx_rx == 2){
+                // if copander ==2 then select menu 1:Rx
+                gSubMenuSelection = 1;
+            }
+            else {
+                gSubMenuSelection = 0;
+                gSetting_backlight_on_tx_rx = 0;
+            }
+#else
             gSubMenuSelection = gSetting_backlight_on_tx_rx;
+#endif
+
             break;
 
         case MENU_TDR:
@@ -1245,6 +1313,29 @@ void MENU_ShowCurrentSetting(void)
 
         case MENU_COMPAND:
             gSubMenuSelection = gTxVfo->Compander;
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+            // gTxVfo->Compander -> gSubMenuSelection
+            //  0:off -> 0:off
+            //  1:Tx -> 0:off (invalid)
+            //  2:Rx -> 1:RX
+            //  3:Tx/Rx -> 0:off (invalid)
+            if (gTxVfo->Compander == 0) {
+                gSubMenuSelection = 0;
+            }
+            if (gTxVfo->Compander == 1 || gTxVfo->Compander == 3) {
+                // invalid Compander -> set to OFF:0
+                gSubMenuSelection = 0;
+                gTxVfo->Compander = 0;
+            }
+            else if (gTxVfo->Compander == 2){
+                // if copander ==2 then select menu 1:Rx
+                gSubMenuSelection = 1;
+            }
+            else {
+                gSubMenuSelection = 0;
+                gTxVfo->Compander = 0;                
+            }
+#endif
             return;
 
         case MENU_1_CALL:
@@ -1365,10 +1456,12 @@ void MENU_ShowCurrentSetting(void)
             break;
 
 #endif
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+
         case MENU_350EN:
             gSubMenuSelection = gSetting_350EN;
             break;
-
+#endif
 #ifndef ENABLE_FEAT_F4HWN
         case MENU_SCREN:
             gSubMenuSelection = gSetting_ScrambleEnable;
@@ -1398,13 +1491,27 @@ void MENU_ShowCurrentSetting(void)
         case MENU_F2SHRT:
         case MENU_F2LONG:
         case MENU_MLONG:
+#ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
+        case MENU_PTTSHRT:
+        //case MENU_PTTLONG:
         {
             uint8_t * fun[]= {
                 &gEeprom.KEY_1_SHORT_PRESS_ACTION,
                 &gEeprom.KEY_1_LONG_PRESS_ACTION,
                 &gEeprom.KEY_2_SHORT_PRESS_ACTION,
                 &gEeprom.KEY_2_LONG_PRESS_ACTION,
-                &gEeprom.KEY_M_LONG_PRESS_ACTION};
+                &gEeprom.KEY_M_LONG_PRESS_ACTION,
+                &gEeprom.KEY_PTT_SHORT_PRESS_ACTION,
+                &gEeprom.KEY_PTT_LONG_PRESS_ACTION};
+#else
+        {
+            uint8_t * fun[]= {
+                &gEeprom.KEY_1_SHORT_PRESS_ACTION,
+                &gEeprom.KEY_1_LONG_PRESS_ACTION,
+                &gEeprom.KEY_2_SHORT_PRESS_ACTION,
+                &gEeprom.KEY_2_LONG_PRESS_ACTION,
+                &gEeprom.KEY_M_LONG_PRESS_ACTION,};
+#endif
             uint8_t id = *fun[UI_MENU_GetCurrentMenuId()-MENU_F1SHRT];
 
             for(int i = 0; i < gSubMenu_SIDEFUNCTIONS_size; i++) {

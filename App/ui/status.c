@@ -213,6 +213,9 @@ void UI_DisplayStatus()
 
 #ifdef ENABLE_FEAT_F4HWN
     // PTT indicator
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    // nothing to do
+#else
     if(!gAirCopyBootMode) {
         if (gSetting_set_ptt_session) {
             memcpy(line + x, gFontPttOnePush, sizeof(gFontPttOnePush));
@@ -224,6 +227,7 @@ void UI_DisplayStatus()
             x1 = x + sizeof(gFontPttClassic) + 1;       
         }
     }
+#endif
     x += sizeof(gFontPttClassic) + 3;
 #endif
 

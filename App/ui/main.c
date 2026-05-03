@@ -1838,6 +1838,7 @@ void UI_DisplayMain(void)
         UI_PrintStringSmallNormal(s, LCD_WIDTH + 24, 0, line + 1);
 #endif
 
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
         if (state == VFO_STATE_NORMAL || state == VFO_STATE_ALARM)
         {   // show the TX power
             uint8_t currentPower = vfoInfo->OUTPUT_POWER % 8;
@@ -1877,6 +1878,7 @@ void UI_DisplayMain(void)
                 memcpy(p_line0 + 256 + arrowPos, BITMAP_PowerUser, sizeof(BITMAP_PowerUser));
             }
         }
+#endif
 
         if (vfoInfo->freq_config_RX.Frequency != vfoInfo->freq_config_TX.Frequency)
         {   // show the TX offset symbol

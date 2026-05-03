@@ -339,6 +339,14 @@ void ACTION_Handle(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
             if (bKeyHeld)
                 func = gEeprom.KEY_M_LONG_PRESS_ACTION;
             break;
+#ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
+        case KEY_PTT:
+            if (bKeyHeld)
+                func = gEeprom.KEY_PTT_LONG_PRESS_ACTION;
+            else
+                func = gEeprom.KEY_PTT_SHORT_PRESS_ACTION;
+            break;
+#endif
         default:
             break;
     }
