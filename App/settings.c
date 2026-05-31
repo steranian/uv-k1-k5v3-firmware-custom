@@ -386,11 +386,7 @@ gEeprom.FreqChannel[1]   = IS_FREQ_CHANNEL(Data16[5]) ? Data16[5] : (FREQ_CHANNE
     gSetting_200TX             = (Data[3] < 2) ? Data[3] : false;
     gSetting_500TX             = (Data[4] < 2) ? Data[4] : false;
 #endif
-#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
-    gSetting_350EN             = false;
-#else
     gSetting_350EN             = (Data[5] < 2) ? Data[5] : true;
-#endif
 #ifdef ENABLE_FEAT_F4HWN
     gSetting_ScrambleEnable    = false;
 #else
@@ -479,11 +475,11 @@ gEeprom.FreqChannel[1]   = IS_FREQ_CHANNEL(Data16[5]) ? Data16[5] : (FREQ_CHANNE
         const uint8_t set_ptt_scn = Data[7] & 0x0F;
         gSetting_set_pwr = (((Data[7] & 0xF0) >> 4) < 7) ? ((Data[7] & 0xF0) >> 4) : 0;
         gSetting_set_ptt = (set_ptt_scn < 4) ? (set_ptt_scn & 0x01) : 0;
-#ifdef ENABLE_FEAT_F4HWN_SCAN_FASTER
-        gSetting_set_scn = (set_ptt_scn < 4) ? ((set_ptt_scn & 0x02) == 0) : 1;
-#endif
 #ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
         gSetting_set_pwr = 0;
+#endif
+#ifdef ENABLE_FEAT_F4HWN_SCAN_FASTER
+        gSetting_set_scn = (set_ptt_scn < 4) ? ((set_ptt_scn & 0x02) == 0) : 1;
 #endif
 
         gSetting_set_tot = (((Data[6] & 0xF0) >> 4) < 4) ? ((Data[6] & 0xF0) >> 4) : 0;

@@ -213,9 +213,7 @@ const t_menu_item MenuList[] =
     {"Tx 350",      MENU_350TX         }, // was "350TX"
     {"Tx 500",      MENU_500TX         }, // was "500TX"
 #endif
-#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     {"350 En",      MENU_350EN         }, // was "350EN"
-#endif
 #ifndef ENABLE_FEAT_F4HWN
     {"ScraEn",      MENU_SCREN         }, // was "SCREN"
 #endif
@@ -999,9 +997,7 @@ void UI_DisplayMenu(void)
         case MENU_200TX:
         case MENU_500TX:
 #endif
-#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
         case MENU_350EN:
-#endif
 #ifndef ENABLE_FEAT_F4HWN
         case MENU_SCREN:
 #endif

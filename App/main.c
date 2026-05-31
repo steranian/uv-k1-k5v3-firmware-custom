@@ -110,7 +110,7 @@ void Main(void)
 #ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     // force TX lock
     gSetting_F_LOCK = F_LOCK_ALL;
-    gSetting_350EN  = false;
+    //gSetting_350EN  = false;
     gSetting_set_pwr = 0;
     gEeprom.ROGER   = ROGER_MODE_OFF;
     gEeprom.TAIL_TONE_ELIMINATION = false;

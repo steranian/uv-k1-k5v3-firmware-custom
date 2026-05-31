@@ -116,10 +116,7 @@ enum
     MENU_350TX,
     MENU_500TX,
 #endif
-
-#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     MENU_350EN,
-#endif
     #ifndef ENABLE_FEAT_F4HWN
     MENU_SCREN,
 #endif

@@ -246,9 +246,7 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
         case MENU_200TX:
         case MENU_500TX:
 #endif
-#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
         case MENU_350EN:
-#endif
 #ifndef ENABLE_FEAT_F4HWN
         case MENU_SCREN:
 #endif
@@ -926,13 +924,11 @@ void MENU_AcceptSetting(void)
             gSetting_500TX = gSubMenuSelection;
             break;
 #endif
-#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
         case MENU_350EN:
             gSetting_350EN       = gSubMenuSelection;
             gVfoConfigureMode    = VFO_CONFIGURE_RELOAD;
             gFlagResetVfos       = true;
             break;
-#endif
 #ifndef ENABLE_FEAT_F4HWN
         case MENU_SCREN:
             gSetting_ScrambleEnable = gSubMenuSelection;
@@ -1467,12 +1463,9 @@ void MENU_ShowCurrentSetting(void)
             break;
 
 #endif
-#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
-
         case MENU_350EN:
             gSubMenuSelection = gSetting_350EN;
             break;
-#endif
 #ifndef ENABLE_FEAT_F4HWN
         case MENU_SCREN:
             gSubMenuSelection = gSetting_ScrambleEnable;
