@@ -31,7 +31,7 @@
 
 void UI_DisplayFM(void)
 {
-    char String[16] = {0};
+    char String[16];
 #ifdef ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME
     char StationString[16] = {0};   // 局名
     char FreqString[16] = {0};      // 周波数
@@ -84,7 +84,6 @@ void UI_DisplayFM(void)
 
     UI_PrintString(pPrintStr, 0, 127, 3, 10); // memory, vfo, scan
 
-    memset(String, 0, sizeof(String));
     if (gAskToSave || (gEeprom.FM_IsMrMode && gInputBoxIndex > 0)) {
         UI_GenerateChannelString(String, gFM_ChannelPosition);
     UI_PrintString(String, 0, 127, 1, 10);

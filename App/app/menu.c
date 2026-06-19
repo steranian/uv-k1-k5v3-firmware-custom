@@ -222,6 +222,13 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
             *pMax = ARRAY_SIZE(gSubMenu_RX_TX) - 1;
             break;
 
+#if defined(ENABLE_FEAT_F4HWN) && defined(ENABLE_FEAT_F4HWN_LOGO_SAV)
+        case MENU_SET_SAV:
+            //*pMin = 0;
+            *pMax = SET_SAV_LEN - 1;
+            break;
+#endif
+
         #ifndef ENABLE_FEAT_F4HWN
             #ifdef ENABLE_AM_FIX
                 case MENU_AM_FIX:
@@ -1065,6 +1072,11 @@ void MENU_AcceptSetting(void)
         case MENU_SET_TMR:
             gSetting_set_tmr = gSubMenuSelection;
             break;
+#ifdef ENABLE_FEAT_F4HWN_LOGO_SAV
+        case MENU_SET_SAV:
+            gSetting_set_sav = gSubMenuSelection;
+            break;
+#endif
         case MENU_TX_LOCK:
 #ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
             gTxVfo->TX_LOCK = 1; // Off:0 On:1
@@ -1597,6 +1609,11 @@ void MENU_ShowCurrentSetting(void)
         case MENU_SET_TMR:
             gSubMenuSelection = gSetting_set_tmr;
             break;
+#ifdef ENABLE_FEAT_F4HWN_LOGO_SAV
+        case MENU_SET_SAV:
+            gSubMenuSelection = gSetting_set_sav;
+            break;
+#endif
         case MENU_TX_LOCK:
             gSubMenuSelection = gTxVfo->TX_LOCK;
             break;
