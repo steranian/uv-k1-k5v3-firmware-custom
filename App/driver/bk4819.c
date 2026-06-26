@@ -456,6 +456,11 @@ void BK4819_ToggleGpioOut(BK4819_GPIO_PIN_t Pin, bool bSet)
     BK4819_WriteRegister(BK4819_REG_33, gBK4819_GpioOutState);
 }
 
+bool BK4819_IsGpioOutSet(BK4819_GPIO_PIN_t Pin)
+{
+    return (gBK4819_GpioOutState & (0x40u >> Pin)) != 0;
+}
+
 void BK4819_SetCDCSSCodeWord(uint32_t CodeWord)
 {
     // REG_51
@@ -1810,7 +1815,7 @@ void BK4819_PrepareFSKReceive(void)
     BK4819_WriteRegister(BK4819_REG_59, 0x3068);
 }
 
-static void BK4819_PlayRogerNormal(void)
+static void BK4819_PlayRogerNormal(BK4819_FilterBandwidth_t Bandwidth)
 {
 #ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     return;
@@ -1829,12 +1834,19 @@ static void BK4819_PlayRogerNormal(void)
     BK4819_EnterTxMute();
     BK4819_SetAF(BK4819_AF_MUTE);
 
-    BK4819_WriteRegister(BK4819_REG_70, BK4819_REG_70_ENABLE_TONE1 | (66u << BK4819_REG_70_SHIFT_TONE1_TUNING_GAIN));
+    const uint8_t rogerToneGain = (Bandwidth == BK4819_FILTER_BW_WIDE) ? 32u : 66u;
+
+    if (Bandwidth == BK4819_FILTER_BW_WIDE)
+        BK4819_SetFilterBandwidth(BK4819_FILTER_BW_NARROW, true);
+
+    BK4819_WriteRegister(BK4819_REG_71, scale_freq(tone1_Hz));
 
     BK4819_EnableTXLink();
     SYSTEM_DelayMs(50);
 
-    BK4819_WriteRegister(BK4819_REG_71, scale_freq(tone1_Hz));
+    BK4819_WriteRegister(BK4819_REG_70,
+        BK4819_REG_70_ENABLE_TONE1 |
+        (rogerToneGain << BK4819_REG_70_SHIFT_TONE1_TUNING_GAIN));
 
     BK4819_ExitTxMute();
     SYSTEM_DelayMs(80);
@@ -1847,6 +1859,10 @@ static void BK4819_PlayRogerNormal(void)
     BK4819_EnterTxMute();
 
     BK4819_WriteRegister(BK4819_REG_70, 0x0000);
+
+    if (Bandwidth == BK4819_FILTER_BW_WIDE)
+        BK4819_SetFilterBandwidth(Bandwidth, true);
+
     BK4819_WriteRegister(BK4819_REG_30, 0xC1FE);   // 1 1 0000 0 1 1111 1 1 1 0
 }
 
@@ -1904,14 +1920,14 @@ void BK4819_PlayRogerMDC(void)
     BK4819_WriteRegister(BK4819_REG_58, 0x0000);
 }
 
-void BK4819_PlayRoger(void)
+void BK4819_PlayRoger(BK4819_FilterBandwidth_t Bandwidth)
 {
 #ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     return;
 #endif
 
     if (gEeprom.ROGER == ROGER_MODE_ROGER) {
-        BK4819_PlayRogerNormal();
+        BK4819_PlayRogerNormal(Bandwidth);
     } else if (gEeprom.ROGER == ROGER_MODE_MDC) {
         BK4819_PlayRogerMDC();
     }

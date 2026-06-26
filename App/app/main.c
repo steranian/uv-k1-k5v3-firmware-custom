@@ -225,9 +225,9 @@ static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
         case KEY_4:
             HideFKeyIcon();
 
-#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
-            return;
-#endif
+//#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+//            return;
+//#endif
 
             gBackup_CROSS_BAND_RX_TX  = gEeprom.CROSS_BAND_RX_TX;
             gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_OFF;     
@@ -269,13 +269,13 @@ static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
             break;
 
         case KEY_7:
-#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
-            return;
-#endif
 #ifdef ENABLE_FEAT_F4HWN_GAME
             if (!beep) {
                 APP_RunBreakout();
             } else {
+#endif
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+            return;
 #endif
 #ifdef ENABLE_VOX
                 ACTION_Vox();
