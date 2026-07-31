@@ -498,7 +498,6 @@ gEeprom.FreqChannel[1]   = IS_FREQ_CHANNEL(Data16[5]) ? Data16[5] : (FREQ_CHANNE
         int tmp = ((Data[5] & 0xF0) >> 4);
 
         gSetting_set_inv = (((tmp >> 0) & 0x01) < 2) ? ((tmp >> 0) & 0x01): 0;
-        gSetting_set_lck = (((tmp >> 1) & 0x01) < 2) ? ((tmp >> 1) & 0x01): 0;
         gSetting_set_met = (((tmp >> 2) & 0x01) < 2) ? ((tmp >> 2) & 0x01): 0;
         gSetting_set_gui = (((tmp >> 3) & 0x01) < 2) ? ((tmp >> 3) & 0x01): 0;
         gSetting_set_ctr = (((Data[5] & 0x0F)) > 00 && ((Data[5] & 0x0F)) < 16) ? ((Data[5] & 0x0F)) : 10;
@@ -513,7 +512,7 @@ gEeprom.FreqChannel[1]   = IS_FREQ_CHANNEL(Data16[5]) ? Data16[5] : (FREQ_CHANNE
 #else
         gSetting_set_inv = 0;
 #endif
-        gSetting_set_lck = (tmp >> 1) & 0x01;
+        gSetting_set_lck = (Data[2] < SET_LCK_LEN) ? Data[2] : SET_LCK_KEYS;
         gSetting_set_met = (tmp >> 2) & 0x01;
         gSetting_set_gui = (tmp >> 3) & 0x01;
 
@@ -531,12 +530,12 @@ gEeprom.FreqChannel[1]   = IS_FREQ_CHANNEL(Data16[5]) ? Data16[5] : (FREQ_CHANNE
 
         // And set special session settings for actions
         gSetting_set_ptt_session = gSetting_set_ptt;
-        gEeprom.KEY_LOCK_PTT = gSetting_set_lck;
     #endif
 
 #ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
-    // 0x00A170 以降の自由領域から読み出す
-    PY25Q16_ReadBuffer(0x00A170, Data, 2); 
+    // 0x00A170 以降の自由領域から読み出すー＞0x00A200
+    // 5.7.0 で本家が使い始めたので、場所変えました
+    PY25Q16_ReadBuffer(0x00A200, Data, 2); 
 
     // 短押し設定 (デフォルトは ACTION_OPT_NONE または MONITOR 等)
     gEeprom.KEY_PTT_SHORT_PRESS_ACTION = (Data[0] < ACTION_OPT_LEN) ? Data[0] : ACTION_OPT_NONE;
@@ -1155,8 +1154,6 @@ void SETTINGS_SaveSettings(void)
 
     if(gSetting_set_inv == 1)
         tmp = tmp | (1 << 0);
-    if (gSetting_set_lck == 1)
-        tmp = tmp | (1 << 1);
     if (gSetting_set_met == 1)
         tmp = tmp | (1 << 2);
     if (gSetting_set_gui == 1)
@@ -1170,10 +1167,10 @@ void SETTINGS_SaveSettings(void)
 #endif
 
     tmp =   (gSetting_set_inv << 0) |
-            (gSetting_set_lck << 1) |
             (gSetting_set_met << 2) |
             (gSetting_set_gui << 3);
 
+    State[2] = gSetting_set_lck;
     State[5] = ((tmp << 4) | (gSetting_set_ctr & 0x0F));
     State[6] = ((gSetting_set_tot << 4) | (gSetting_set_eot & 0x0F));
     uint8_t set_ptt_scn_sav = gSetting_set_ptt & 0x01;
@@ -1186,8 +1183,6 @@ void SETTINGS_SaveSettings(void)
 #endif
 
     State[7] = ((gSetting_set_pwr << 4) | set_ptt_scn_sav);
-
-    gEeprom.KEY_LOCK_PTT = gSetting_set_lck;
 
     PY25Q16_WriteBuffer(0x00A158, SecBuf, 8, false);
 #endif
@@ -1202,8 +1197,9 @@ void SETTINGS_SaveSettings(void)
     SecBuf[0] = gEeprom.KEY_PTT_SHORT_PRESS_ACTION;
     SecBuf[1] = gEeprom.KEY_PTT_LONG_PRESS_ACTION;
 
-    // 0x00A170 へ書き込む
-    PY25Q16_WriteBuffer(0x00A170, SecBuf, 2, false);
+    // 0x00A170 へ書き込む　ー＞0x00A200
+    // 本家が 0x00A170使い始めたので場所変えました
+    PY25Q16_WriteBuffer(0x00A200, SecBuf, 2, false);
 #endif
 
 
