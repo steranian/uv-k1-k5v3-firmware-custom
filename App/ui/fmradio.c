@@ -32,10 +32,11 @@
 void UI_DisplayFM(void)
 {
     char String[16];
+
 #ifdef ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME
     char StationString[16] = {0};   // 局名
-    char FreqString[16] = {0};      // 周波数
 #endif
+
     char *pPrintStr = String;
     UI_DisplayClear();
 
@@ -108,28 +109,22 @@ void UI_DisplayFM(void)
 
 
 #ifdef ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME
-
     memset(StationString, 0, sizeof(StationString));
-    if (gFM_ScanState == FM_SCAN_OFF) {
-        if (gEeprom.FM_IsMrMode) {
-            // あらかじめセットアップしておいた gFmNames の中の周波数と
-            // 現在表示している周波数を比較して、合っていたら局名を表示
-            for (uint8_t i = 0; i < 48; i++) {
-                if (gFmNames[i].Frequency == 0) break; // 前詰めなので0が出たら終了
-                
-                sprintf(FreqString, "%3d.%1d", 
-                    gFmNames[i].Frequency , 
-                    gFmNames[i].FrequencyPost);
-                if ( strcmp(String, FreqString)==0) {
-                    sprintf(StationString, "%s", gFmNames[i].Name);
-                    break;
-                }
-            }            
-        }
+    if (gFM_ScanState == FM_SCAN_OFF) { // ★ && !gEeprom.FM_IsMrMode を削除
+        // 直接 gEeprom.FM_FrequencyPlaying (100kHz単位) と数値を比較する
+        for (uint8_t i = 0; i < 100; i++) {
+            if (gFmStationList[i].Frequency == 0) break; // 終端
+            
+            // 数値で一致判定
+            if (gFmStationList[i].Frequency == gEeprom.FM_FrequencyPlaying) {
+                // ヒットした！ここで初めて Flash から局名を読み出す
+                SETTINGS_FetchChannelName(StationString, gFmStationList[i].Channel);
+                break;
+            }
+        }            
     }
-    //UI_PrintString(StationString, 0, 127, 4, 10);
+    
     UI_PrintStringSmallNormal(StationString, 0, 127, 5);
-
 #endif
 
     ST7565_BlitFullScreen();

@@ -344,6 +344,7 @@ static void RXTX_LOG_InvalidateViewCache(void)
     RXTX_LOG_InvalidateViewAnchors();
 }
 
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
 static void RXTX_LOG_NextFilter(void)
 {
     gLogFilter++;
@@ -355,6 +356,7 @@ static void RXTX_LOG_NextFilter(void)
     gUpdateStatus = true;
     gUpdateDisplay = true;
 }
+#endif
 
 static void RXTX_LOG_ResetLogCounters(void)
 {

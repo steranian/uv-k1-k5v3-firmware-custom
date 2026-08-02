@@ -263,6 +263,11 @@ static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
 
         case KEY_6:
 #ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+#ifdef ENABLE_FEAT_STERANIAN_SCNRNG_VFO_COPY
+            // copy memory to vfo and launch scnrng
+            CHFRSCANNER_ToggleScanRangeWithVfoCopy();
+#endif
+
             return;
 #endif
             ACTION_Power();

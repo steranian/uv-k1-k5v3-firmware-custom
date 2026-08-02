@@ -33,13 +33,23 @@ PTT（送信ボタン）を押しても電波が一切出ないよう、ファ�
 
 ## 📻 FMラジオ局名の表示
 もともとこちらがメインで作成した機能で、今でも個人的に重宝しています。   
-メモリチャンネルの **901 から 948 まで**を使用します。   
-あらかじめ周波数と局名を登録しておくと、FMラジオのメモリモードで一致する周波数を表示する際、局名も併せて表示します。   
+任意のメモリチャンネルに、表示したいFM局名と周波数を登録してください。   
+このとき、FM局表示用のチャンネルは特定のScanListに所属させてください。   
+メニューから FMName を選択し、所属させた ScanList の番号を選択してください。   
+（いくつでも登録できますが、指定したScanListの最初の100個までを局名として識別します）   
+FMラジオのメモリモードで一致する周波数を表示する際、局名も併せて表示されます。   
    
-FMラジオの周波数は表示されるものの、すべてのFM局の周波数は覚えていられないので登録できるようにしてみました。チャンネルが901から948まで決め打ちですがご容赦ください。   
+FMラジオの周波数は表示されるものの、とてもすべてのFM局の周波数は覚えていられないので登録できるようにしてみました。   
    
-<img width="373" height="366" alt="chirp" src="https://github.com/user-attachments/assets/ff63f1ad-0e5f-496f-aec2-ae59055d09fb" />
+図：FM局名の登録   
+<img width="373" height="366" alt="chirp" src="https://github.com/user-attachments/assets/ff63f1ad-0e5f-496f-aec2-ae59055d09fb" />   
 
+図：ScanList に所属させる (この例では 9 番を指定しています)   
+<img width="392" height="394" alt="FMRadioName1" src="https://github.com/user-attachments/assets/e58dfcd8-7a40-4a48-a782-c057c3b8637b" /><img width="394" height="394" alt="FMRadioName2" src="https://github.com/user-attachments/assets/5af6790c-baf4-4349-8ec9-11497ef41bd9" />   
+   
+図：FM局名を持つScanListを指定する   
+<img width="526" height="334" alt="FMRadioNameSettings" src="https://github.com/user-attachments/assets/596082a7-e441-4e28-a97a-e58e224736b2" />   
+   
 ---
 
 ## 📜 謝辞

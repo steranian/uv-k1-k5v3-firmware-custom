@@ -56,45 +56,50 @@ const uint8_t BUTTON_EVENT_LONG =  BUTTON_STATE_HELD;
 static void Key_FUNC(KEY_Code_t Key, uint8_t state);
 
 #ifdef ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME
-
-FmStation_t gFmNames[48];
-void FM_LoadStationNames(void); // 初期化関数
+FmStationIdx_t gFmStationList[100]; // FM局名は100個までとした
 
 void FM_LoadStationNames(void)
 {
-    // FMラジオで局名を表示するために、周波数と局名の配列を作成
-    // FMラジオで保存できる局数は48までと決まってるので、配列のサイズも48
-    // FMラジオが起動されたときに、この関数を呼び出して、メモリから48局分の
-    // 周波数と局名の一覧をつくっておきます
-    // メモリの位置は、901 ～ 948 固定
-
     uint8_t count = 0;
-    memset(gFmNames, 0, sizeof(gFmNames)); // 配列をクリア
+    memset(gFmStationList, 0, sizeof(gFmStationList));
 
-    for (uint16_t i = 900; i < 948; i++) { // チャンネルとしては 901 から 948
-        uint32_t frequency;
+    // メニューで設定されたリスト番号を取得
+    uint8_t targetList = gEeprom.FM_STATION_LIST; 
+    if (targetList == 0 || targetList > MR_CHANNELS_LIST) return;
 
-        // SETTINGS_FetchChannnel と SETTINGS_FetchChannelName という小便利そうな関数があったので利用
-        // 使っていいかどうかはわかんないけど、とりあえずやりたいことはできてる感じ
-
-        frequency = SETTINGS_FetchChannelFrequency(i);
-
-        //  へんな値が入ってないかチェック
-        if (frequency != 0xFFFFFFFF && frequency != 0) {
-            // xx.x Mhz なので桁数合わせ
-            gFmNames[count].Frequency = frequency / 100000;
-            gFmNames[count].FrequencyPost = (frequency / 10000) % 10;
+    // 一括読み込み用のバッファ（32チャンネル分 = 64バイト）
+    ChannelAttributes_t attr_buf[32];
+    
+    // 1024チャンネルを、32チャンネルずつの塊(チャンク)で処理する
+    for (uint16_t chunk = 0; chunk < MR_CHANNELS_MAX; chunk += 32) {
+        
+        // 0x008000 が属性データのベースアドレス。32chを一気に読み込む
+        PY25Q16_ReadBuffer(0x008000 + (chunk * 2), attr_buf, sizeof(attr_buf));
+        
+        for (uint8_t i = 0; i < 32; i++) {
+            uint16_t ch = chunk + i;
+            ChannelAttributes_t *att = &attr_buf[i];
             
-            // 局名を取得
-            SETTINGS_FetchChannelName(gFmNames[count].Name, i);
+            if (att->__val == 0xFFFF || att->band > BAND7_470MHz) {
+                continue;
+            }
             
-            // 前詰めで格納していきます
-            count++;
-            if (count >= 48) break; // 配列がいっぱいになったら終了
+            // ターゲットのリストと一致したら、周波数データを取得
+            if (att->scanlist == targetList) {
+                uint32_t frequency = SETTINGS_FetchChannelFrequency(ch);
+                
+                if (frequency != 0xFFFFFFFF && frequency != 0) {
+                    // 100kHz単位の整数にして保存。例：80.0MHz(8000000) なら 8000000 / 10000 = 800
+                    gFmStationList[count].Frequency = frequency / 10000;
+                    gFmStationList[count].Channel = ch;
+                    
+                    count++;
+                    if (count >= 100) return; // 上限100局に達したら即終了
+                }
+            }
         }
     }
 }
-
 #endif
 
 

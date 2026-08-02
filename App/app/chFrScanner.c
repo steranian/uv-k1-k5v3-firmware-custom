@@ -1201,3 +1201,82 @@ static void NextMemChannel(void)
             currentScanList = SCAN_NEXT_CHAN_SCANLIST1;  // back round we go
 #endif
 }
+
+#ifdef ENABLE_FEAT_STERANIAN_SCNRNG_VFO_COPY
+// ▼ 状態保存用の変数を関数の外（または上部）に用意する
+static uint16_t gSavedScreenChannel[2] = {0xFFFF, 0xFFFF};
+static bool gWasScanRangeCopied = false;
+
+void CHFRSCANNER_ToggleScanRangeWithVfoCopy(void)
+{
+    bool need_reconfig = false;
+
+    if (gScanRangeStart != 0) {
+        // すでに ScanRng が実行中の場合は解除する
+        CHFRSCANNER_ScanRange(); // これを呼ぶと gScanRangeStart = 0 になり解除される
+
+        // 保存しておいた状態に復元する
+        if (gWasScanRangeCopied) {
+            for (uint8_t i = 0; i < 2; i++) {
+                if (gSavedScreenChannel[i] != 0xFFFF) {
+                    // 記憶しておいたチャンネル（メモリモードなど）に戻す
+                    gEeprom.ScreenChannel[i] = gSavedScreenChannel[i];
+                    
+                    // EEPROMから元の設定をリロードしてVFOを再構成する
+                    RADIO_ConfigureChannel(i, VFO_CONFIGURE_RELOAD);
+                    need_reconfig = true;
+                }
+            }
+            gWasScanRangeCopied = false;
+        }
+    } 
+    else {
+        // ScanRng が実行されていない場合は、現在の設定を保存して開始する
+        gWasScanRangeCopied = false;
+        bool vfo_copied = false;
+
+        for (uint8_t i = 0; i < 2; i++) {
+            // 現在の ScreenChannel を保存 (これが「メモリ」か「VFO」かの記憶になる)
+            gSavedScreenChannel[i] = gEeprom.ScreenChannel[i];
+
+            if (IS_MR_CHANNEL(gEeprom.ScreenChannel[i])) {
+                // メモリモードならVFOモードにコピーする
+                uint8_t band = gEeprom.VfoInfo[i].Band;
+                
+                // FREQ(VFO)モードへ切り替え
+                gEeprom.ScreenChannel[i] = FREQ_CHANNEL_FIRST + band;
+                gEeprom.FreqChannel[i]   = FREQ_CHANNEL_FIRST + band;
+                gEeprom.VfoInfo[i].CHANNEL_SAVE = gEeprom.ScreenChannel[i];
+                
+                // コピーした今の状態をEEPROMのVFO領域にも保存しておく
+                SETTINGS_SaveChannel(gEeprom.ScreenChannel[i], i, &gEeprom.VfoInfo[i], 1);
+
+                vfo_copied = true;
+                need_reconfig = true;
+            }
+        }
+
+        if (vfo_copied) {
+            gWasScanRangeCopied = true;
+            // メモリからVFOにコピーしたので、正しい周波数などの内部計算を適用する
+            RADIO_SelectVfos();
+            RADIO_ApplyOffset(&gEeprom.VfoInfo[0]);
+            RADIO_ApplyOffset(&gEeprom.VfoInfo[1]);
+            RADIO_ConfigureSquelchAndOutputPower(&gEeprom.VfoInfo[0]);
+            RADIO_ConfigureSquelchAndOutputPower(&gEeprom.VfoInfo[1]);
+        }
+
+        // ScanRng を開始
+        CHFRSCANNER_ScanRange();
+    }
+
+    // 共通の再構成とEEPROMへのインデックス保存処理
+    if (need_reconfig) {
+        RADIO_SetupRegisters(true);   // ラジオチップを新しい設定で更新
+        gRequestSaveVFO = true;
+        SETTINGS_SaveVfoIndices();    // 切り替えた状態を保存
+        gUpdateDisplay = true;
+        gUpdateStatus = true;
+    }
+}
+#endif

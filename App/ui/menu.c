@@ -155,6 +155,9 @@ const t_menu_item MenuList[] =
     {"D List",      MENU_D_LIST        },
 #endif
     {"D Live",      MENU_D_LIVE_DEC    }, // live DTMF decoder
+#ifdef ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME
+    {"FMName",      MENU_LIST_FMNAME    },
+#endif
 #ifndef ENABLE_FEAT_F4HWN
     #ifdef ENABLE_AM_FIX
         {"AM Fix",      MENU_AM_FIX        },
@@ -1183,9 +1186,16 @@ void UI_DisplayMenu(void)
 
         case MENU_LIST_CH:
         case MENU_S_LIST:
+#ifdef ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME
+        case MENU_LIST_FMNAME:
+#endif
             if (gSubMenuSelection == MR_CHANNELS_LIST + 1)
                 strcpy(String, "ALL");
+#ifdef ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME
+            else if (gSubMenuSelection == 0 && (m == MENU_LIST_CH || m == MENU_LIST_FMNAME)) 
+#else
             else if (gSubMenuSelection == 0 && m == MENU_LIST_CH)
+#endif
                 strcpy(String, "OFF");
             else {
                 const char *name = gListName[gSubMenuSelection - 1];

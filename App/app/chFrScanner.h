@@ -51,3 +51,7 @@ uint8_t CHFRSCANNER_GetScanRssiSparklineLevel(uint8_t index);
 #endif
 
 #endif
+
+#ifdef ENABLE_FEAT_STERANIAN_SCNRNG_VFO_COPY
+void CHFRSCANNER_ToggleScanRangeWithVfoCopy(void);
+#endif

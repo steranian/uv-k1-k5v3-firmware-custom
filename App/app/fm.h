@@ -42,13 +42,12 @@ extern bool              gFM_FoundFrequency;
 extern uint16_t          gFM_RestoreCountdown_10ms;
 
 #ifdef ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME
+void FM_LoadStationNames(void);
 typedef struct {
-    uint16_t Frequency;
-    uint8_t FrequencyPost;
-    char Name[16];
-} FmStation_t;
-
-extern FmStation_t gFmNames[48];
+    uint16_t Frequency;      // 例: 800 (80.0MHzの場合), 1075 (107.5MHzの場合)
+    uint16_t Channel;        // メモリチャンネル番号 (EEPROMから名前を引くため)
+} FmStationIdx_t;
+extern FmStationIdx_t gFmStationList[100]; // 最大100局まで保持
 #endif
 
 bool    FM_CheckValidChannel(uint8_t Channel);

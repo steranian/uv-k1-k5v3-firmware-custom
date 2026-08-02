@@ -328,6 +328,12 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
             *pMax = MR_CHANNELS_LIST + 1;
             break;
 
+#ifdef ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME
+        case MENU_LIST_FMNAME:
+            *pMax = MR_CHANNELS_LIST; // 0=OFF, 1〜24=リスト
+            break;
+#endif
+
 #ifdef ENABLE_DTMF_CALLING
         case MENU_D_RSP:
             //*pMin = 0;
@@ -781,6 +787,12 @@ void MENU_AcceptSetting(void)
         case MENU_S_LIST:
             gEeprom.SCAN_LIST_DEFAULT = gSubMenuSelection;
             break;
+
+#ifdef ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME
+        case MENU_LIST_FMNAME:
+            gEeprom.FM_STATION_LIST = gSubMenuSelection;
+            break;
+#endif
 
         case MENU_S_PRI:
             gEeprom.SCAN_LIST_ENABLED = gSubMenuSelection;
@@ -1364,6 +1376,12 @@ void MENU_ShowCurrentSetting(void)
         case MENU_S_LIST:
             gSubMenuSelection = gEeprom.SCAN_LIST_DEFAULT;
             break;
+
+#ifdef ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME
+        case MENU_LIST_FMNAME:
+            gSubMenuSelection = gEeprom.FM_STATION_LIST;
+            break;
+#endif
 
         case MENU_S_PRI:
             gSubMenuSelection = gEeprom.SCAN_LIST_ENABLED;
