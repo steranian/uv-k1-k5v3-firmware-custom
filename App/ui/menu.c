@@ -597,20 +597,23 @@ const t_sidefunction gSubMenu_SIDEFUNCTIONS[] =
         {"RxA",            ACTION_OPT_RXA},
     #endif
     #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
-    #ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
-        {"POWER\nHIGH",    ACTION_OPT_POWER_HIGH},
-    #endif // RECEIVE_ONLY_MODE
+        #ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+            {"POWER\nHIGH",    ACTION_OPT_POWER_HIGH},
+        #endif // RECEIVE_ONLY_MODE
         {"REMOVE\nOFFSET",  ACTION_OPT_REMOVE_OFFSET},
     #endif
     #ifdef ENABLE_FEAT_F4HWN_BEAM
         {"BEAM",            ACTION_OPT_BEAM},
     #endif
     #ifdef ENABLE_FEAT_F4HWN_RXTX_LOG
-    #ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
-        {"Rx LOG",          ACTION_OPT_RXTX_LOG},
-    #else
-        {"RF LOG",          ACTION_OPT_RXTX_LOG},
+        #ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+            {"Rx LOG",          ACTION_OPT_RXTX_LOG},
+        #else
+            {"RF LOG",          ACTION_OPT_RXTX_LOG},
+        #endif
     #endif
+    #ifdef ENABLE_FEAT_F4HWN_FOXHUNT
+        {"FOX HUNT\nBEACON", ACTION_OPT_FOXHUNT},
     #endif
 #endif
 };
@@ -1291,7 +1294,7 @@ void UI_DisplayMenu(void)
             if (page == p++) {
                 // Page 0: firmware identity.
 #ifdef ENABLE_FEAT_F4HWN
-                sprintf(String, "%s\n%s", AUTHOR_STRING_2, VERSION_STRING_2);
+                sprintf(String, "%s\n%s", AUTHOR_STRING_2, DISPLAY_VERSION_STRING_2);
                 UI_PrintStringSmallNormal(Edition, menu_item_x1 - 1, menu_item_x2, 6);
 #else
                 sprintf(String, "%u.%02uV\n%u%%",
