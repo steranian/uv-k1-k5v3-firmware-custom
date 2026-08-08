@@ -214,6 +214,9 @@ enable_feature(ENABLE_FEAT_F4HWN_RXTX_LOG
 enable_feature(ENABLE_FEAT_F4HWN_FOXHUNT
     app/foxhunt.c
 )
+enable_feature(ENABLE_FEAT_STERANIAN_SPIRITBOX
+    app/spiritbox.c
+)
 enable_feature(ENABLE_FEAT_F4HWN_RXTX_LOG_WRAP)
 enable_feature(ENABLE_FEAT_F4HWN_RXTX_LOG_K5VIEWER)
 
@@ -240,6 +243,8 @@ enable_feature(ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME)
 enable_feature(ENABLE_FEAT_STERANIAN_PTT_REMAP)
 # ---- ScnRng VFO COPY ----
 enable_feature(ENABLE_FEAT_STERANIAN_SCNRNG_VFO_COPY)
+
+enable_feature(ENABLE_FEAT_STERANIAN_SPIRITBOX)
 
 
 # ---- DEBUGGING ----

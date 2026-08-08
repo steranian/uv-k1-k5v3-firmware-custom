@@ -51,6 +51,9 @@
 #ifdef ENABLE_FEAT_F4HWN_FOXHUNT
     #include "app/foxhunt.h"
 #endif
+#ifdef ENABLE_FEAT_STERANIAN_SPIRITBOX
+    #include "app/spiritbox.h"
+#endif
 
 #if defined(ENABLE_FMRADIO)
 static void ACTION_Scan_FM(bool bRestart);
@@ -142,6 +145,9 @@ void (*const action_opt_table[])(void) = {
 #endif
 #ifdef ENABLE_FEAT_F4HWN_FOXHUNT
     [ACTION_OPT_FOXHUNT] = &ACTION_FoxHunt,
+#endif
+#ifdef ENABLE_FEAT_STERANIAN_SPIRITBOX
+    [ACTION_OPT_SPIRITBOX] = &ACTION_SpiritBox,
 #endif
 };
 
@@ -399,6 +405,9 @@ void ACTION_Handle(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
     #endif
     #ifdef ENABLE_FEAT_F4HWN_FOXHUNT
             case ACTION_OPT_FOXHUNT:
+    #endif
+    #ifdef ENABLE_FEAT_STERANIAN_SPIRITBOX
+            case ACTION_OPT_SPIRITBOX:
     #endif
                 gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
                 return;

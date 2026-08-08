@@ -138,11 +138,21 @@ static uint8_t         gLogDetailMode;
 
 bool RXTX_LOG_IsEnabled(void)
 {
-    return gEeprom.KEY_1_SHORT_PRESS_ACTION == ACTION_OPT_RXTX_LOG ||
-           gEeprom.KEY_1_LONG_PRESS_ACTION  == ACTION_OPT_RXTX_LOG ||
-           gEeprom.KEY_2_SHORT_PRESS_ACTION == ACTION_OPT_RXTX_LOG ||
-           gEeprom.KEY_2_LONG_PRESS_ACTION  == ACTION_OPT_RXTX_LOG ||
-           gEeprom.KEY_M_LONG_PRESS_ACTION  == ACTION_OPT_RXTX_LOG;
+    #ifndef ENABLE_FEAT_STERANIAN_PTT_REMAP
+        return gEeprom.KEY_1_SHORT_PRESS_ACTION == ACTION_OPT_RXTX_LOG ||
+            gEeprom.KEY_1_LONG_PRESS_ACTION  == ACTION_OPT_RXTX_LOG ||
+            gEeprom.KEY_2_SHORT_PRESS_ACTION == ACTION_OPT_RXTX_LOG ||
+            gEeprom.KEY_2_LONG_PRESS_ACTION  == ACTION_OPT_RXTX_LOG ||
+            gEeprom.KEY_M_LONG_PRESS_ACTION  == ACTION_OPT_RXTX_LOG;
+    #else
+        return gEeprom.KEY_1_SHORT_PRESS_ACTION == ACTION_OPT_RXTX_LOG ||
+            gEeprom.KEY_1_LONG_PRESS_ACTION  == ACTION_OPT_RXTX_LOG ||
+            gEeprom.KEY_2_SHORT_PRESS_ACTION == ACTION_OPT_RXTX_LOG ||
+            gEeprom.KEY_2_LONG_PRESS_ACTION  == ACTION_OPT_RXTX_LOG ||
+            gEeprom.KEY_M_LONG_PRESS_ACTION  == ACTION_OPT_RXTX_LOG ||
+            gEeprom.KEY_PTT_SHORT_PRESS_ACTION == ACTION_OPT_RXTX_LOG ||
+            gEeprom.KEY_PTT_LONG_PRESS_ACTION  == ACTION_OPT_RXTX_LOG;
+    #endif
 }
 
 static void RXTX_LOG_ResetActiveSession(void)

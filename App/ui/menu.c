@@ -619,6 +619,9 @@ const t_sidefunction gSubMenu_SIDEFUNCTIONS[] =
             {"FOX HUNT\nBEACON", ACTION_OPT_FOXHUNT},
         #endif
     #endif
+    #ifdef ENABLE_FEAT_STERANIAN_SPIRITBOX
+        {"SPIRITBOX", ACTION_OPT_SPIRITBOX},
+    #endif
 #endif
 };
 
