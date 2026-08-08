@@ -55,6 +55,10 @@ void ACTION_SwitchDemodul(void);
     #endif
 #endif
 
+#ifdef ENABLE_FEAT_SPIRITBOX
+    void ACTION_SpiritBox(void);
+#endif
+
 void ACTION_Handle(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld);
 
 #endif

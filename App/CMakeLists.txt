@@ -214,6 +214,10 @@ enable_feature(ENABLE_FEAT_F4HWN_RXTX_LOG
 enable_feature(ENABLE_FEAT_F4HWN_FOXHUNT
     app/foxhunt.c
 )
+enable_feature(ENABLE_FEAT_SPIRITBOX
+    app/spiritbox.c
+)
+
 enable_feature(ENABLE_FEAT_F4HWN_RXTX_LOG_WRAP)
 enable_feature(ENABLE_FEAT_F4HWN_RXTX_LOG_K5VIEWER)
 
