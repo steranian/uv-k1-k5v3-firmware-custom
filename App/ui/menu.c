@@ -613,7 +613,11 @@ const t_sidefunction gSubMenu_SIDEFUNCTIONS[] =
         #endif
     #endif
     #ifdef ENABLE_FEAT_F4HWN_FOXHUNT
-        {"FOX HUNT\nBEACON", ACTION_OPT_FOXHUNT},
+        #ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+            {"FOX HUNT", ACTION_OPT_FOXHUNT},
+        #else
+            {"FOX HUNT\nBEACON", ACTION_OPT_FOXHUNT},
+        #endif
     #endif
 #endif
 };
