@@ -331,7 +331,6 @@ volatile uint8_t  boot_counter_10ms;
 
 uint8_t           gIsLocked = 0xFF;
 
-
 #ifdef ENABLE_FEAT_F4HWN
     bool          gK5startup = true;
     bool          gBackLight = false;
@@ -347,6 +346,8 @@ uint8_t           gIsLocked = 0xFF;
     bool gVfoStateChanged = false;
     char    gListName[MR_CHANNELS_LIST][4];
 #endif
+
+/////bool gChirpActive = false;
 
 inline void FUNCTION_NOP() { ; }
 

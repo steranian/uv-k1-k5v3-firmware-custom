@@ -85,10 +85,10 @@ void MENU_StartCssScan(void)
 void MENU_CssScanFound(void)
 {
     if(gScanCssResultType == CODE_TYPE_DIGITAL || gScanCssResultType == CODE_TYPE_REVERSE_DIGITAL) {
-        gMenuCursor = UI_MENU_GetMenuIdx(MENU_R_DCS);
+        gMenuCursor = UI_MENU_GetViewPos(MENU_R_DCS);
     }
     else if(gScanCssResultType == CODE_TYPE_CONTINUOUS_TONE) {
-        gMenuCursor = UI_MENU_GetMenuIdx(MENU_R_CTCS);
+        gMenuCursor = UI_MENU_GetViewPos(MENU_R_CTCS);
     }
 
     MENU_ShowCurrentSetting();
@@ -330,6 +330,12 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
 
 #ifdef ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME
         case MENU_LIST_FMNAME:
+            *pMax = MR_CHANNELS_LIST; // 0=OFF, 1〜24=リスト
+            break;
+#endif
+
+#ifdef ENABLE_FEAT_STERANIAN_MEM_RNG_SCAN
+        case MENU_LIST_MEM_RNG_SCN:
             *pMax = MR_CHANNELS_LIST; // 0=OFF, 1〜24=リスト
             break;
 #endif
@@ -793,6 +799,11 @@ void MENU_AcceptSetting(void)
             gEeprom.FM_STATION_LIST = gSubMenuSelection;
             break;
 #endif
+#ifdef ENABLE_FEAT_STERANIAN_MEM_RNG_SCAN
+        case MENU_LIST_MEM_RNG_SCN:
+            gEeprom.MEM_RNG_SCN_LIST = gSubMenuSelection;
+            break;
+#endif
 
         case MENU_S_PRI:
             gEeprom.SCAN_LIST_ENABLED = gSubMenuSelection;
@@ -986,31 +997,23 @@ void MENU_AcceptSetting(void)
         case MENU_F2SHRT:
         case MENU_F2LONG:
         case MENU_MLONG:
+        {
+            uint8_t * fun[]= {
+                &gEeprom.KEY_1_SHORT_PRESS_ACTION,
+                &gEeprom.KEY_1_LONG_PRESS_ACTION,
+                &gEeprom.KEY_2_SHORT_PRESS_ACTION,
+                &gEeprom.KEY_2_LONG_PRESS_ACTION,
+                &gEeprom.KEY_M_LONG_PRESS_ACTION};
+            *fun[UI_MENU_GetCurrentMenuId()-MENU_F1SHRT] = gSubMenu_SIDEFUNCTIONS[gSubMenuSelection].id;
+            break;
+        }
 #ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
         case MENU_PTTSHRT:
         //case MENU_PTTLONG:
-            {
-                uint8_t * fun[]= {
-                    &gEeprom.KEY_1_SHORT_PRESS_ACTION,
-                    &gEeprom.KEY_1_LONG_PRESS_ACTION,
-                    &gEeprom.KEY_2_SHORT_PRESS_ACTION,
-                    &gEeprom.KEY_2_LONG_PRESS_ACTION,
-                    &gEeprom.KEY_M_LONG_PRESS_ACTION,
-                    &gEeprom.KEY_PTT_SHORT_PRESS_ACTION,
-                    &gEeprom.KEY_PTT_LONG_PRESS_ACTION};
-#else
-            {
-                uint8_t * fun[]= {
-                    &gEeprom.KEY_1_SHORT_PRESS_ACTION,
-                    &gEeprom.KEY_1_LONG_PRESS_ACTION,
-                    &gEeprom.KEY_2_SHORT_PRESS_ACTION,
-                    &gEeprom.KEY_2_LONG_PRESS_ACTION,
-                    &gEeprom.KEY_M_LONG_PRESS_ACTION};
-#endif
-                *fun[UI_MENU_GetCurrentMenuId()-MENU_F1SHRT] = gSubMenu_SIDEFUNCTIONS[gSubMenuSelection].id;
-            }
+            // PTT短押し設定に直接、選択されたアクションIDを代入（安全でズレない）
+            gEeprom.KEY_PTT_SHORT_PRESS_ACTION = gSubMenu_SIDEFUNCTIONS[gSubMenuSelection].id;
             break;
-
+#endif 
 #ifdef ENABLE_FEAT_F4HWN_SLEEP 
         case MENU_SET_OFF:
             gSetting_set_off = gSubMenuSelection;
@@ -1383,6 +1386,13 @@ void MENU_ShowCurrentSetting(void)
             break;
 #endif
 
+#ifdef ENABLE_FEAT_STERANIAN_MEM_RNG_SCAN
+        case MENU_LIST_MEM_RNG_SCN:
+            gSubMenuSelection = gEeprom.MEM_RNG_SCN_LIST;
+            break;
+#endif
+
+
         case MENU_S_PRI:
             gSubMenuSelection = gEeprom.SCAN_LIST_ENABLED;
             break;
@@ -1525,19 +1535,6 @@ void MENU_ShowCurrentSetting(void)
         case MENU_F2SHRT:
         case MENU_F2LONG:
         case MENU_MLONG:
-#ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
-        case MENU_PTTSHRT:
-        //case MENU_PTTLONG:
-        {
-            uint8_t * fun[]= {
-                &gEeprom.KEY_1_SHORT_PRESS_ACTION,
-                &gEeprom.KEY_1_LONG_PRESS_ACTION,
-                &gEeprom.KEY_2_SHORT_PRESS_ACTION,
-                &gEeprom.KEY_2_LONG_PRESS_ACTION,
-                &gEeprom.KEY_M_LONG_PRESS_ACTION,
-                &gEeprom.KEY_PTT_SHORT_PRESS_ACTION,
-                &gEeprom.KEY_PTT_LONG_PRESS_ACTION};
-#else
         {
             uint8_t * fun[]= {
                 &gEeprom.KEY_1_SHORT_PRESS_ACTION,
@@ -1545,7 +1542,6 @@ void MENU_ShowCurrentSetting(void)
                 &gEeprom.KEY_2_SHORT_PRESS_ACTION,
                 &gEeprom.KEY_2_LONG_PRESS_ACTION,
                 &gEeprom.KEY_M_LONG_PRESS_ACTION,};
-#endif
             uint8_t id = *fun[UI_MENU_GetCurrentMenuId()-MENU_F1SHRT];
 
             for(int i = 0; i < gSubMenu_SIDEFUNCTIONS_size; i++) {
@@ -1557,6 +1553,42 @@ void MENU_ShowCurrentSetting(void)
             }
             break;
         }
+#ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
+        case MENU_PTTSHRT:
+        //case MENU_PTTLONG:
+        {
+            // 安全対策：設定されているアクションIDを安全に取得
+            uint8_t action_id = gEeprom.KEY_PTT_SHORT_PRESS_ACTION;
+            gSubMenuSelection = 0; // 一致しない場合のデフォルト (NONE)
+
+            // gSubMenu_SIDEFUNCTIONS 配列から、一致するアクションIDのインデックスを安全に検索する
+            for (uint8_t i = 0; i < gSubMenu_SIDEFUNCTIONS_size; i++) {
+                if (gSubMenu_SIDEFUNCTIONS[i].id == action_id) {
+                    gSubMenuSelection = i;
+                    break;
+                }
+            }
+        }
+        break; // ★ break も忘れずに！
+#endif
+
+        /*
+        {
+            // 直接PTT短押しの設定IDを読み込む
+            uint8_t id = gEeprom.KEY_PTT_SHORT_PRESS_ACTION;
+            gSubMenuSelection = UI_MENU_GetViewPos(id);
+
+            for(int i = 0; i < gSubMenu_SIDEFUNCTIONS_size; i++) {
+                if(gSubMenu_SIDEFUNCTIONS[i].id==id) {
+                    gSubMenuSelection = i;
+                    break;
+                }
+            } 
+
+            break;
+        }
+        */
+
 
 #ifdef ENABLE_FEAT_F4HWN_SLEEP 
         case MENU_SET_OFF:
@@ -1724,6 +1756,36 @@ static void MENU_Key_0_to_9(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
     INPUTBOX_Append(Key);
 
     gRequestDisplayScreen = DISPLAY_MENU;
+
+#ifdef ENABLE_FEAT_F4HWN_MENU_CAT
+    if (gMenuLevel == MENU_LEVEL_CAT)
+    {   // saut-par-numero global : depuis l'ecran categories, entre dans All a l'item N
+        const uint8_t allCount = UI_MENU_CategoryItemCount(CAT_ALL);
+        uint16_t value;
+
+        if (gInputBoxIndex >= 2) {
+            gInputBoxIndex = 0;
+            value = (gInputBox[0] * 10) + gInputBox[1];
+        } else {
+            value = gInputBox[0];
+        }
+
+        if (value > 0 && value <= allCount)
+        {
+            gMenuCategory  = CAT_ALL;
+            gMenuCatCursor = gMenuListCount - 1;   // All = derniere entree de gCatOrder
+            UI_MENU_BuildView();
+            gMenuLevel     = MENU_LEVEL_ITEMS;
+            gMenuCursor    = value - 1;
+            gFlagRefreshSetting = true;
+        }
+        else if (gInputBoxIndex == 0)
+        {
+            gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+        }
+        return;
+    }
+#endif
 
     if (!gIsInSubMenu)
     {
@@ -1939,6 +2001,22 @@ Skip:
             return;
         }
 
+#ifdef ENABLE_FEAT_F4HWN_MENU_CAT
+        if (gMenuLevel == MENU_LEVEL_ITEMS)
+        {   // remonter aux categories au lieu de quitter le menu
+            gCatLastPos[gMenuCategory] = gMenuCursor;   // memorise la position dans la categorie
+            gMenuLevel  = MENU_LEVEL_CAT;
+            UI_MENU_BuildCategoryScreen();
+            gMenuCursor = gMenuCatCursor;
+            gRequestDisplayScreen = DISPLAY_MENU;
+            #ifdef ENABLE_VOICE
+                gAnotherVoiceID = VOICE_ID_CANCEL;
+            #endif
+            gPttWasReleased = true;
+            return;
+        }
+#endif
+
         #ifdef ENABLE_VOICE
             gAnotherVoiceID = VOICE_ID_CANCEL;
         #endif
@@ -1972,13 +2050,28 @@ static void MENU_Key_MENU(const bool bKeyPressed, const bool bKeyHeld)
     gBeepToPlay           = BEEP_1KHZ_60MS_OPTIONAL;
     gRequestDisplayScreen = DISPLAY_MENU;
 
+#ifdef ENABLE_FEAT_F4HWN_MENU_CAT
+    if (gMenuLevel == MENU_LEVEL_CAT)
+    {   // niveau categories : MENU descend dans la categorie choisie
+        gMenuCatCursor = gMenuCursor;
+        gMenuCategory  = gCatOrder[gMenuCursor];
+
+        UI_MENU_BuildView();
+        gMenuLevel   = MENU_LEVEL_ITEMS;
+        gMenuCursor  = (gCatLastPos[gMenuCategory] < gMenuListCount) ? gCatLastPos[gMenuCategory] : 0;
+        gIsInSubMenu = false;
+        gFlagRefreshSetting = true;
+        return;
+    }
+#endif
+
     if (!gIsInSubMenu)
     {
         const int m = UI_MENU_GetCurrentMenuId();
 
         #ifdef ENABLE_VOICE
             if (m != MENU_SCR)
-                gAnotherVoiceID = MenuList[gMenuCursor].voice_id;
+                gAnotherVoiceID = MenuList[gMenuIndices[gMenuCursor]].voice_id;
         #endif
         if (m == MENU_UPCODE 
             || m == MENU_DWCODE 
@@ -2177,6 +2270,16 @@ static void MENU_Key_UP_DOWN(bool bKeyPressed, bool bKeyHeld, int8_t Direction)
         gInputBoxIndex = 0;
         gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
     }
+
+#ifdef ENABLE_FEAT_F4HWN_MENU_CAT
+    if (gMenuLevel == MENU_LEVEL_CAT)
+    {   // niveau categories : deplacement simple du curseur
+        gMenuCursor = NUMBER_AddWithWraparound(gMenuCursor, -Direction, 0, gMenuListCount - 1);
+        gFlagRefreshSetting = true;   // rearme le timeout menu (ShowCurrentSetting saute au niveau CAT)
+        gRequestDisplayScreen = DISPLAY_MENU;
+        return;
+    }
+#endif
 
     if (!gEeprom.SET_NAV && gIsInSubMenu) {
         Direction = -Direction;

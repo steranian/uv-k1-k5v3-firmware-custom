@@ -1133,7 +1133,9 @@ static void NextMemChannel(void)
 
     if (!enabled || chan == 0xFFFF)
     {
+#ifdef ENABLE_FEAT_F4HWN_SCAN_FASTER
         const uint16_t searchStart = gNextMrChannel;
+#endif
         chan = RADIO_FindNextChannel(gNextMrChannel + gScanStateDir, gScanStateDir, true, gEeprom.SCAN_LIST_DEFAULT);
         if (chan == 0xFFFF)
         {   // no valid channel found -> wrapping back to the first channel
@@ -1208,8 +1210,9 @@ static void NextMemChannel(void)
 
 #ifdef ENABLE_FEAT_STERANIAN_SCNRNG_VFO_COPY
 // ▼ 状態保存用の変数を関数の外（または上部）に用意する
-static uint16_t gSavedScreenChannel[2] = {0xFFFF, 0xFFFF};
-static bool gWasScanRangeCopied = false;
+// static を外し、他のファイル（action.c等）からアクセス可能にしました
+uint16_t gSavedScreenChannel[2] = {0xFFFF, 0xFFFF};
+bool gWasScanRangeCopied = false;
 
 void CHFRSCANNER_ToggleScanRangeWithVfoCopy(void)
 {

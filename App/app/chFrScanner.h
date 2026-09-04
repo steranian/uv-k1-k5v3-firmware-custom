@@ -55,3 +55,9 @@ uint8_t CHFRSCANNER_GetScanRssiSparklineLevel(uint8_t index);
 #ifdef ENABLE_FEAT_STERANIAN_SCNRNG_VFO_COPY
 void CHFRSCANNER_ToggleScanRangeWithVfoCopy(void);
 #endif
+
+// action.c からバックアップ領域を書き換えるための外部参照宣言
+#ifdef ENABLE_FEAT_STERANIAN_SCNRNG_VFO_COPY
+extern uint16_t gSavedScreenChannel[2];
+extern bool gWasScanRangeCopied;
+#endif

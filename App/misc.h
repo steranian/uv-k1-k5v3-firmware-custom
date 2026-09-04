@@ -502,3 +502,5 @@ void FUNCTION_NOP();
 static inline bool SerialConfigInProgress() { return gSerialConfigCountDown_500ms != 0; }
 
 #endif
+
+/////extern bool gChirpActive;

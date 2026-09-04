@@ -139,6 +139,9 @@ enum ACTION_OPT_t {
 #ifdef ENABLE_FEAT_STERANIAN_SPIRITBOX
     ACTION_OPT_SPIRITBOX,
 #endif
+#ifdef ENABLE_FEAT_STERANIAN_MEM_RNG_SCAN
+    ACTION_OPT_MEM_RNG_SCN,
+#endif
 
     ACTION_OPT_LEN
 };
@@ -317,10 +320,13 @@ typedef struct {
 
 #ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
     uint8_t               KEY_PTT_SHORT_PRESS_ACTION;
-    uint8_t               KEY_PTT_LONG_PRESS_ACTION;
+    //uint8_t               KEY_PTT_LONG_PRESS_ACTION;
 #endif
 #ifdef ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME
     uint8_t                 FM_STATION_LIST;
+#endif
+#ifdef ENABLE_FEAT_STERANIAN_MEM_RNG_SCAN
+    uint8_t                 MEM_RNG_SCN_LIST;
 #endif
 } EEPROM_Config_t;
 

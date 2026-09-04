@@ -150,8 +150,8 @@ bool RXTX_LOG_IsEnabled(void)
             gEeprom.KEY_2_SHORT_PRESS_ACTION == ACTION_OPT_RXTX_LOG ||
             gEeprom.KEY_2_LONG_PRESS_ACTION  == ACTION_OPT_RXTX_LOG ||
             gEeprom.KEY_M_LONG_PRESS_ACTION  == ACTION_OPT_RXTX_LOG ||
-            gEeprom.KEY_PTT_SHORT_PRESS_ACTION == ACTION_OPT_RXTX_LOG ||
-            gEeprom.KEY_PTT_LONG_PRESS_ACTION  == ACTION_OPT_RXTX_LOG;
+            gEeprom.KEY_PTT_SHORT_PRESS_ACTION == ACTION_OPT_RXTX_LOG; // ||
+            //gEeprom.KEY_PTT_LONG_PRESS_ACTION  == ACTION_OPT_RXTX_LOG;
     #endif
 }
 

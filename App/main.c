@@ -61,6 +61,7 @@
 #include "helper/battery.h"
 #include "helper/boot.h"
 
+#include "ui/helper.h"
 #include "ui/lock.h"
 #include "ui/welcome.h"
 #include "ui/menu.h"
@@ -166,6 +167,51 @@ void Main(void)
     }
 #endif
 
+// ==========================================
+// F2 起動で強制フルリセット
+// ==========================================
+#ifdef ENABLE_FEAT_STERANIAN_BOOT_RESET
+    // 起動時に F2が物理的に押されている場合
+    if (KEYBOARD_Poll() == KEY_SIDE2) {
+        uint16_t hold_timer = 0;
+        bool reset_triggered = false;
+
+        // ボタンが押し続けられている間ループする
+        while (KEYBOARD_Poll() == KEY_SIDE2) {
+            SYSTEM_DelayMs(10); // 10ms待機
+            hold_timer++;
+
+            // 押し始めてから約20秒（2000回ループ）経過したらリセット開始
+            if (hold_timer >= 2000 && !reset_triggered) {
+                reset_triggered = true;
+                
+                // 画面にポップアップで警告を表示
+                UI_DisplayPopup("RESETTING..."); // 先ほど直したポップアップ機能がここで大活躍します！ [6]
+                SYSTEM_DelayMs(500); // 案内が見えるように少し待つ
+                
+                // 1. 工場出荷出荷状態（ALL）へリセットを実行
+                SETTINGS_FactoryReset(true);
+                
+                // 2. 完了案内
+                UI_DisplayPopup("RESET DONE!");
+                SYSTEM_DelayMs(1000);
+                
+                // 3. 本体をハードウェアレベルで強制再起動
+                #if defined(ENABLE_OVERLAY)
+                    overlay_FLASH_RebootToBootloader();
+                #else
+                    NVIC_SystemReset();
+                #endif
+            }
+        }
+        
+        // 20秒未満でボタンを離した場合は、リセットされずにそのまま通常起動へ流れます（安全設計）
+    }
+#endif
+// ==========================================
+
+
+
     if (BootMode == BOOT_MODE_F_LOCK)
     {
 
@@ -173,19 +219,17 @@ void Main(void)
         #ifdef ENABLE_FEAT_F4HWN
             gEeprom.KEY_LOCK = 0;
             SETTINGS_SaveSettings();
+            #ifdef ENABLE_FEAT_F4HWN_MENU_CAT
+                gMenuLevel    = MENU_LEVEL_ITEMS;
+                gMenuCategory = CAT_ALL;
+            #endif
             gMenuCursor = UI_MENU_GetMenuIdx(FIRST_HIDDEN_MENU_ITEM);
             gSubMenuSelection = gSetting_F_LOCK;
         #endif
     }
 
-    // count the number of menu items
-    gMenuListCount = 0;
-    while (MenuList[gMenuListCount].name[0] != '\0') {
-        if(!gF_LOCK && MenuList[gMenuListCount].menu_id == FIRST_HIDDEN_MENU_ITEM)
-            break;
-
-        gMenuListCount++;
-    }
+    // build the current menu view (Etape 1: vue = All, identite)
+    UI_MENU_BuildView();
 
     // wait for user to release all butts before moving on
     if (GPIO_IsPttPressed() ||

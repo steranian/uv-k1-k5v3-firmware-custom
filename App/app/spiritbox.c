@@ -15,6 +15,7 @@
 #include "driver/backlight.h"
 #include "ui/helper.h"
 #include "ui/ui.h"
+#include "ui/status.h"
 #include "misc.h"
 #include "settings.h"
 #include "external/printf/printf.h"
@@ -101,7 +102,8 @@ void APP_RunSpiritBox(void)
     uint8_t current_mem_idx = 0;     // 現在のメモリインデックス
 
     BACKLIGHT_TurnOn();
-    UI_DisplayClear();
+    //UI_DisplayClear();
+    UI_DisplayStatus();
     
     gKeyReading0 = KEY_INVALID;
     gKeyReading1 = KEY_INVALID;
@@ -229,6 +231,7 @@ void APP_RunSpiritBox(void)
 
         UI_DisplayClear();
         //UI_StatusClear();
+        UI_DisplayStatus();
         
         // --- テキスト描画 ---
         //UI_PrintStringSmallBold("UV SPIRIT BOX", 32, 0, 0);

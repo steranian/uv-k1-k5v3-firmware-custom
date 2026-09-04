@@ -532,24 +532,61 @@ gEeprom.FreqChannel[1]   = IS_FREQ_CHANNEL(Data16[5]) ? Data16[5] : (FREQ_CHANNE
         gSetting_set_ptt_session = gSetting_set_ptt;
     #endif
 
-#if defined(ENABLE_FEAT_STERANIAN_PTT_REMAP) || defined(ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME)
+
+/*
+#if defined(ENABLE_FEAT_STERANIAN_PTT_REMAP) || defined(ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME) || defined(ENABLE_FEAT_STERANIAN_MEM_RNG_SCAN)
+    // 4バイトの作業バッファを確保し、0xFF で初期化（アライメント安全対策）
+    uint8_t TempBuf[4]; // = {0xFF, 0xFF, 0xFF, 0xFF};
+    memset(TempBuf, 0xff, 4); 
+
+    // 既存のフラッシュデータ（4バイト）を一旦ロードして他の設定を保護
+    PY25Q16_ReadBuffer(0x00A200, TempBuf, 4);
+
+#ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
+    TempBuf[0] = gEeprom.KEY_PTT_SHORT_PRESS_ACTION;
+#endif
+#ifdef ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME
+    TempBuf[1] = gEeprom.FM_STATION_LIST;
+#endif
+#ifdef ENABLE_FEAT_STERANIAN_MEM_RNG_SCAN
+    TempBuf[2] = gEeprom.MEM_RNG_SCN_LIST;
+#endif
+
+    // アライメントの崩壊を防ぐため、必ず「4バイト」で安全に書き込む
+    PY25Q16_WriteBuffer(0x00A200, TempBuf, 4, false);
+#endif
+
+*/
+
+
+
+
+
+//#if defined(ENABLE_FEAT_STERANIAN_PTT_REMAP) || defined(ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME) || defined(ENABLE_FEAT_STERANIAN_MEM_RNG_SCAN)
     // 0x00A170 以降の自由領域から読み出す->0x00A200
     // 5.7.0 で本家が使い始めたので、場所変えました
-    PY25Q16_ReadBuffer(0x00A200, Data, 3);
+
+    memset(Data, 0xff, 4); 
+    PY25Q16_ReadBuffer(0x00A200, Data, 4);
 
 #ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
     // 短押し設定 (デフォルトは ACTION_OPT_NONE または MONITOR 等)
     gEeprom.KEY_PTT_SHORT_PRESS_ACTION = (Data[0] < ACTION_OPT_LEN) ? Data[0] : ACTION_OPT_NONE;
 
     // 長押し設定 (デフォルトは ACTION_OPT_SCAN 等)
-    gEeprom.KEY_PTT_LONG_PRESS_ACTION  = (Data[1] < ACTION_OPT_LEN) ? Data[1] : ACTION_OPT_NONE;
+    //gEeprom.KEY_PTT_LONG_PRESS_ACTION  = (Data[1] < ACTION_OPT_LEN) ? Data[1] : ACTION_OPT_NONE;
 #endif
 
 #ifdef ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME
     // ★ FMラジオ局名リスト番号 (0〜24。範囲外なら0(OFF)にする)
-    gEeprom.FM_STATION_LIST            = (Data[2] <= MR_CHANNELS_LIST) ? Data[2] : 0;
+    gEeprom.FM_STATION_LIST            = (Data[1] <= MR_CHANNELS_LIST) ? Data[1] : 0;
 #endif
+
+#ifdef ENABLE_FEAT_STERANIAN_MEM_RNG_SCAN
+    gEeprom.MEM_RNG_SCN_LIST            = (Data[2] <= MR_CHANNELS_LIST) ? Data[2] : 0;
 #endif
+
+//#endif
 }
 
 void SETTINGS_LoadCalibration(void)
@@ -1198,21 +1235,27 @@ void SETTINGS_SaveSettings(void)
     SETTINGS_WriteCurrentVol();
 #endif
 
-#if defined(ENABLE_FEAT_STERANIAN_PTT_REMAP) || defined(ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME)
-    memset(SecBuf, 0xff, 3); 
+#if defined(ENABLE_FEAT_STERANIAN_PTT_REMAP) || defined(ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME) || defined(ENABLE_FEAT_STERANIAN_MEM_RNG_SCAN)
+    memset(SecBuf, 0xff, 4); 
+    PY25Q16_ReadBuffer(0x00A200, SecBuf, 4); 
 #ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
     // PTTボタン設定用
     SecBuf[0] = gEeprom.KEY_PTT_SHORT_PRESS_ACTION;
-    SecBuf[1] = gEeprom.KEY_PTT_LONG_PRESS_ACTION;
+    //SecBuf[1] = gEeprom.KEY_PTT_LONG_PRESS_ACTION;
 #endif
 #ifdef ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME
     // ラジオ局名表示時の対象リスト用
-    SecBuf[2] = gEeprom.FM_STATION_LIST;
+    SecBuf[1] = gEeprom.FM_STATION_LIST;
 #endif
+
+#ifdef ENABLE_FEAT_STERANIAN_MEM_RNG_SCAN
+    SecBuf[2] = gEeprom.MEM_RNG_SCN_LIST;
+#endif
+
 
     // 0x00A170 へ書き込む->0x00A200
     // 本家が 0x00A170使い始めたので場所変えました
-    PY25Q16_WriteBuffer(0x00A200, SecBuf, 3, false);
+    PY25Q16_WriteBuffer(0x00A200, SecBuf, 4, false);
 #endif
 
 

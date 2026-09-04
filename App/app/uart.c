@@ -708,8 +708,12 @@ bool UART_IsCommandAvailable(uint32_t Port)
         if (CommandLength < 8)
             return 0;
 
-        if (ReadBuf[DMA_INDEX(*pReadPointer, 1, ReadBufSize)] == 0xCD)
+        if (ReadBuf[DMA_INDEX(*pReadPointer, 1, ReadBufSize)] == 0xCD){
+            // ★追加：Chirpのマジックヘッダを検知した瞬間、K5Viewerを強制終了させる
+            /////gChirpActive = true;
+            // ここまで
             break;
+        }
 
         *pReadPointer = DMA_INDEX(*pReadPointer, 1, ReadBufSize);
     }

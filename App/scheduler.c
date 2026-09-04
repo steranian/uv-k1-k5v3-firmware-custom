@@ -63,6 +63,16 @@ void SysTick_Handler(void)
 #endif
         
         DECREMENT_AND_TRIGGER(gTxTimerCountdown_500ms, gTxTimeoutReached);
+
+        /*/////
+        // ★修正：タイムアウト時に gChirpSessionActive も解除する
+        if (gSerialConfigCountDown_500ms > 0) {
+            if (--gSerialConfigCountDown_500ms == 0) {
+                gChirpActive = false; // 通信終了でK5Viewerのロック解除
+            }
+        }
+        */
+
         DECREMENT(gSerialConfigCountDown_500ms);
     }
 

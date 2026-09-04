@@ -16,6 +16,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include "external/printf/printf.h"
 
 #include "app/action.h"
 #include "app/app.h"
@@ -36,12 +37,20 @@
 #include "driver/bk4819.h"
 #include "driver/gpio.h"
 #include "driver/backlight.h"
+#include "driver/st7565.h"
+#include "driver/system.h"
+
+
 #include "functions.h"
 #include "misc.h"
 #include "settings.h"
 #include "ui/inputbox.h"
 #include "ui/main.h"
 #include "ui/ui.h"
+#include "ui/status.h"
+#include "ui/helper.h"
+
+
 #ifdef ENABLE_FEAT_F4HWN_BEAM
     #include "app/beam.h"
 #endif
@@ -51,8 +60,19 @@
 #ifdef ENABLE_FEAT_F4HWN_FOXHUNT
     #include "app/foxhunt.h"
 #endif
+#ifdef ENABLE_FEAT_F4HWN_ACTION_PICKER
+    #include "ui/menu.h"
+#endif
+
 #ifdef ENABLE_FEAT_STERANIAN_SPIRITBOX
     #include "app/spiritbox.h"
+#endif
+
+#if defined(ENABLE_UART) || defined(ENABLE_USB)
+#include "app/uart.h"
+#endif
+#ifdef ENABLE_FEAT_F4HWN_K5VIEWER
+#include "k5viewer.h"
 #endif
 
 #if defined(ENABLE_FMRADIO)
@@ -148,6 +168,9 @@ void (*const action_opt_table[])(void) = {
 #endif
 #ifdef ENABLE_FEAT_STERANIAN_SPIRITBOX
     [ACTION_OPT_SPIRITBOX] = &ACTION_SpiritBox,
+#endif
+#ifdef ENABLE_FEAT_STERANIAN_MEM_RNG_SCAN
+    [ACTION_OPT_MEM_RNG_SCN] = &ACTION_MemRangeScan,
 #endif
 };
 
@@ -305,6 +328,127 @@ void ACTION_SwitchDemodul(void)
 }
 
 
+#ifdef ENABLE_FMRADIO
+inline static bool ACTION_IsBlockedInFM(uint8_t action)
+{
+    switch (action) {
+        case ACTION_OPT_POWER:
+        case ACTION_OPT_MONITOR:
+        case ACTION_OPT_A_B:
+        case ACTION_OPT_VFO_MR:
+        case ACTION_OPT_SWITCH_DEMODUL:
+#ifdef ENABLE_VOX
+        case ACTION_OPT_VOX:
+#endif
+#ifdef ENABLE_FEAT_F4HWN
+        case ACTION_OPT_RXMODE:
+        case ACTION_OPT_MAINONLY:
+        case ACTION_OPT_WN:
+    #ifdef ENABLE_FEAT_F4HWN_AUDIO
+        case ACTION_OPT_RXA:
+    #endif
+    #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
+        case ACTION_OPT_POWER_HIGH:
+        case ACTION_OPT_REMOVE_OFFSET:
+    #endif
+#endif
+#ifdef ENABLE_FEAT_F4HWN_BEAM
+        case ACTION_OPT_BEAM:
+#endif
+#ifdef ENABLE_FEAT_F4HWN_FOXHUNT
+        case ACTION_OPT_FOXHUNT:
+#endif
+
+#ifdef ENABLE_FEAT_STERANIAN_SPIRITBOX
+        case ACTION_OPT_SPIRITBOX:
+#endif
+#ifdef ENABLE_FEAT_STERANIAN_MEM_RNG_SCAN
+        case ACTION_OPT_MEM_RNG_SCN:
+#endif
+            return true;
+
+        default:
+            return false;
+    }
+}
+#endif
+
+#ifdef ENABLE_FEAT_F4HWN_ACTION_PICKER
+static void ACTION_Execute(uint8_t action)
+{
+    if (action >= ACTION_OPT_LEN || action_opt_table[action] == NULL) {
+        gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+        return;
+    }
+
+#ifdef ENABLE_FMRADIO
+    if (gFmRadioMode && ACTION_IsBlockedInFM(action)) {
+        gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+        return;
+    }
+#endif
+
+    gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
+    action_opt_table[action]();
+}
+
+uint8_t gActionPickerKey;
+uint8_t gActionPickerSelection[2] = {1, 1};
+uint8_t gActionPickerTimeout_500ms;
+
+bool ACTION_PickerProcessKey(KEY_Code_t key, bool isPressed, bool isHeld)
+{
+    if (gActionPickerKey == 0)
+        return false;
+    if (isPressed)
+        gActionPickerTimeout_500ms = ACTION_PICKER_TIMEOUT_500MS;
+    uint8_t *selection = &gActionPickerSelection[gActionPickerKey - 1];
+
+    switch (key) {
+        case KEY_UP:
+        case KEY_DOWN:
+            if (isPressed && !isHeld) {
+                if (key == KEY_UP) {
+                    if (--*selection == 0)
+                        *selection = gSubMenu_SIDEFUNCTIONS_size - 1;
+                }
+                else if (++*selection >= gSubMenu_SIDEFUNCTIONS_size) {
+                    *selection = 1;
+                }
+
+                gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
+                gUpdateDisplay = true;
+            }
+            return true;
+
+        case KEY_MENU:
+            if (!isPressed && !isHeld) {
+                const uint8_t action = gSubMenu_SIDEFUNCTIONS[*selection].id;
+                gActionPickerKey = 0;
+                gUpdateDisplay = true;
+                ACTION_Execute(action);
+            }
+            return true;
+
+        case KEY_EXIT:
+        case KEY_F:
+            if (!isPressed) {
+                gActionPickerKey = 0;
+                gUpdateDisplay = true;
+            }
+            return true;
+
+        case KEY_PTT:
+            gActionPickerKey = 0;
+            gUpdateDisplay = true;
+            return false;
+
+        default:
+            return true;
+    }
+}
+#endif
+
 void ACTION_Handle(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 {
     HideFKeyIcon();
@@ -358,10 +502,13 @@ void ACTION_Handle(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
             break;
 #ifdef ENABLE_FEAT_STERANIAN_PTT_REMAP
         case KEY_PTT:
+            func = gEeprom.KEY_PTT_SHORT_PRESS_ACTION;
+            /*
             if (bKeyHeld)
-                func = gEeprom.KEY_PTT_LONG_PRESS_ACTION;
+                //func = gEeprom.KEY_PTT_LONG_PRESS_ACTION;
             else
                 func = gEeprom.KEY_PTT_SHORT_PRESS_ACTION;
+            */
             break;
 #endif
         default:
@@ -374,51 +521,20 @@ void ACTION_Handle(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
     }
 
     // held or released after short press
-
+#ifdef ENABLE_FEAT_F4HWN_ACTION_PICKER
+    ACTION_Execute(func);
+#else
     gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
     
 #ifdef ENABLE_FMRADIO
-    if (gFmRadioMode) { // do not run these actions in FM radio mode
-        switch (func) {
-            case ACTION_OPT_POWER:
-            case ACTION_OPT_MONITOR:
-            case ACTION_OPT_A_B:
-            case ACTION_OPT_VFO_MR:
-            case ACTION_OPT_SWITCH_DEMODUL:
-    #ifdef ENABLE_VOX
-            case ACTION_OPT_VOX:
-    #endif
-    #ifdef ENABLE_FEAT_F4HWN
-            case ACTION_OPT_RXMODE:
-            case ACTION_OPT_MAINONLY:
-            case ACTION_OPT_WN:
-        #ifdef ENABLE_FEAT_F4HWN_AUDIO
-            case ACTION_OPT_RXA:
-        #endif
-        #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
-            case ACTION_OPT_POWER_HIGH:
-            case ACTION_OPT_REMOVE_OFFSET:
-        #endif
-    #endif
-    #ifdef ENABLE_FEAT_F4HWN_BEAM
-            case ACTION_OPT_BEAM:
-    #endif
-    #ifdef ENABLE_FEAT_F4HWN_FOXHUNT
-            case ACTION_OPT_FOXHUNT:
-    #endif
-    #ifdef ENABLE_FEAT_STERANIAN_SPIRITBOX
-            case ACTION_OPT_SPIRITBOX:
-    #endif
-                gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
-                return;
-
-            default:
-                break;
-        }
+    if (gFmRadioMode && ACTION_IsBlockedInFM(func)) {
+        gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+        return;
     }
 #endif
 
     action_opt_table[func]();
+#endif
 }
 
 
@@ -713,4 +829,211 @@ void ACTION_Remove_Offset(void)
     ACTION_ToggleVfoSetting(&gRemoveOffset);
 }
 #endif
+#endif
+
+#ifdef ENABLE_FEAT_STERANIAN_MEM_RNG_SCAN
+void ACTION_MemRangeScan(void)
+{
+#ifdef ENABLE_FMRADIO
+    if (gFmRadioMode) return;
+#endif
+
+    if (gEeprom.MEM_RNG_SCN_LIST == 0) {
+        UI_DisplayPopup("SELECT LIST");
+        return;
+    }
+
+    uint16_t pairs[16][2]; // [最大16ペアまで][0=開始CH, 1=終了CH] 
+    uint8_t count = 0;
+    uint8_t selected = 0;
+    uint16_t first_ch = 0xFFFF;
+    
+    // スキャンリストの値をそのまま指定 (1〜24)
+    uint8_t target_list = gEeprom.MEM_RNG_SCN_LIST;
+
+    // 1. スキャンリストに属する有効なチャンネルを順に走査しペアを生成
+    for (uint16_t i = 0; i < MR_CHANNELS_MAX && count < 16; i++) {
+        if (RADIO_CheckValidChannel(i, true, target_list)) {
+            if (first_ch == 0xFFFF) {
+                first_ch = i;
+            } else {
+                pairs[count][0] = first_ch;
+                pairs[count][1] = i;
+                count++;
+                first_ch = 0xFFFF; // リセット
+            }
+        }
+    }
+
+    if (count == 0) {
+        UI_DisplayPopup("NO PAIRS");
+        return;
+    }
+
+    gKeyReading0 = KEY_INVALID;
+    gKeyReading1 = KEY_INVALID;
+
+    KEY_Code_t prevKey = KEY_INVALID;
+    bool isRunning = true;
+    bool redraw = true;
+
+#ifdef ENABLE_FEAT_F4HWN_K5VIEWER
+    gKeyReading0 = KEY_INVALID;
+    gKeyReading1 = KEY_INVALID;
+    K5VIEWER_Update(true);
+#endif
+
+    // 開始時に一度だけステータス行を最新状態に強制上書き描画
+    UI_DisplayStatus();
+
+    // 2. インタラクティブUIループ
+    while (isRunning) {
+#if defined(ENABLE_UART) || defined(ENABLE_USB)
+        UART_ServiceCommands();
+#endif
+#ifdef ENABLE_FEAT_F4HWN_K5VIEWER
+        K5VIEWER_ParseInput();
+#endif
+
+        // 状態変化時のみ描画処理を実行
+        if (redraw) {
+            redraw = false;
+
+            UI_DisplayClear();
+
+            char name[13];
+            char str[32];
+
+            // 終了チャンネル（ペアの2番目）のチャンネル名を取得
+            SETTINGS_FetchChannelName(name, pairs[selected][1]);
+            if (name[0] == '\0' || (uint8_t)name[0] == 0xFF) {
+                sprintf(name, "RANGE %02u", selected + 1);
+            }
+
+            // 画面描画の配置（gFrameBuffer[0..6] のみ。ステータス行は液晶に残したままにする）
+            
+            // Line 1 (gFrameBuffer[0]): タイトルを左側、インデックスを右側に配置
+            UI_PrintStringSmallBold("SCAN RANGE", 2, 0, 0);
+            sprintf(str, "%d/%d", selected + 1, count);
+            UI_PrintStringSmallNormal(str, (uint8_t)(127 - (strlen(str) * 7)), 0, 0);
+
+            // Line 3 & 4 (gFrameBuffer[2], [3]): レンジ名称を中央にデカ文字で表示
+            UI_PrintString(name, 0, 127, 2, 8);
+
+            // Line 6 (gFrameBuffer[5]): 周波数の範囲を表示
+            uint32_t f1 = SETTINGS_FetchChannelFrequency(pairs[selected][0]);
+            uint32_t f2 = SETTINGS_FetchChannelFrequency(pairs[selected][1]);
+
+            /* 1行書きバージョン
+            sprintf(str, "%u.%02u-%u.%02u MHz", 
+                    f1 / 100000, (f1 % 100000) / 1000,
+                    f2 / 100000, (f2 % 100000) / 1000);
+            UI_PrintStringSmallNormal(str, 2, 0, 6);
+            */
+
+            // 2行書きバージョン
+            sprintf(str, "from %u.%05u MHz", 
+                    f1 / 100000, f1 % 100000);
+            UI_PrintStringSmallNormal(str, 2, 0, 5);
+            sprintf(str, "  to %u.%05u MHz", 
+                    f2 / 100000, f2 % 100000);
+            UI_PrintStringSmallNormal(str, 2, 0, 6);
+
+            ST7565_BlitFullScreen();
+
+#ifdef ENABLE_FEAT_F4HWN_K5VIEWER
+            K5VIEWER_Update(false);
+#endif
+        }
+
+        KEY_Code_t key = KEYBOARD_Poll();
+        if (key != prevKey) {
+            if (key == KEY_EXIT) {
+                gKeyReading0     = KEY_INVALID;
+                gKeyReading1     = KEY_INVALID;
+                gDebounceCounter = 0;
+
+                gRequestDisplayScreen = DISPLAY_MAIN;
+                gUpdateDisplay = true;
+                gUpdateStatus = true;
+                isRunning = false;
+            } else if (key == KEY_UP) {
+                selected = (selected + count - 1) % count;
+                redraw = true; // 描画フラグをセット
+            } else if (key == KEY_DOWN) {
+                selected = (selected + 1) % count;
+                redraw = true; // 描画フラグをセット
+            } else if (key == KEY_MENU) {
+                uint32_t f1_start = SETTINGS_FetchChannelFrequency(pairs[selected][0]);
+                uint32_t f2_stop  = SETTINGS_FetchChannelFrequency(pairs[selected][1]);
+
+                uint8_t vfo_num = gEeprom.TX_VFO;
+                
+                // レンジスキャン終了時の復元用に、開始前のScreenChannel状態をバックアップ
+#ifdef ENABLE_FEAT_STERANIAN_SCNRNG_VFO_COPY
+                gSavedScreenChannel[0] = gEeprom.ScreenChannel[0];
+                gSavedScreenChannel[1] = gEeprom.ScreenChannel[1];
+                gWasScanRangeCopied = false; // 初期化
+#endif
+
+                // 開始メモリチャンネルの設定を一時的にセットし、
+                // RADIO_ConfigureChannel を呼んでステップ（10kHz等）や変調、アトリビュートをRAM（gTxVfo）にロードする
+                gEeprom.ScreenChannel[vfo_num] = pairs[selected][0];
+                RADIO_SelectVfos(); // ポインタを一度開始チャンネルに合わせる
+                RADIO_ConfigureChannel(vfo_num, VFO_CONFIGURE_RELOAD);
+
+                // ロード完了後、メモリ上のステップ等を維持したまま、モードを開始周波数に対応するVFOモードに強制切り替え
+                uint8_t band = FREQUENCY_GetBand(f1_start);
+                gEeprom.ScreenChannel[vfo_num] = FREQ_CHANNEL_FIRST + band;
+                gEeprom.FreqChannel[vfo_num]   = FREQ_CHANNEL_FIRST + band;
+                gTxVfo->CHANNEL_SAVE           = gEeprom.ScreenChannel[vfo_num];
+                gTxVfo->Band                   = band;
+
+#ifdef ENABLE_FEAT_STERANIAN_SCNRNG_VFO_COPY
+                // もし元のモードがメモリモード(MR)だった場合、VFOコピーが行われたことを示すフラグを立てる
+                if (IS_MR_CHANNEL(gSavedScreenChannel[vfo_num])) {
+                    gWasScanRangeCopied = true;
+                }
+#endif
+
+                // グローバルポインタを新設したVFOチャンネルの実体にバインドし直す
+                RADIO_SelectVfos();
+
+                // スキャン範囲を設定
+                gScanRangeStart = f1_start;
+                gScanRangeStop  = f2_stop;
+                if (gScanRangeStart > gScanRangeStop) {
+                    SWAP(gScanRangeStart, gScanRangeStop);
+                }
+
+                // 構築されたVFOオブジェクトに対して周波数をセット
+                gTxVfo->freq_config_RX.Frequency = gScanRangeStart;
+                gTxVfo->freq_config_TX.Frequency = gScanRangeStart; // 送信側も初期同期
+                RADIO_ApplyOffset(gTxVfo);
+                RADIO_ConfigureSquelchAndOutputPower(gTxVfo);
+
+                // 変更されたVFOデータ（下限値周波数と、引き継がれたステップ等のすべての設定）をEEPROMのVFO領域に保存する
+                SETTINGS_SaveChannel(gEeprom.ScreenChannel[vfo_num], vfo_num, gTxVfo, 1);
+
+                SETTINGS_SaveVfoIndices();
+                RADIO_SetupRegisters(true);
+
+                // レンジスキャンを開始
+                CHFRSCANNER_Start(true, SCAN_FWD);
+
+                gKeyReading0     = KEY_INVALID;
+                gKeyReading1     = KEY_INVALID;
+                gDebounceCounter = 0;
+
+                gRequestDisplayScreen = DISPLAY_MAIN;
+                gUpdateDisplay = true;
+                gUpdateStatus = true;
+                isRunning = false;
+            }
+            prevKey = key;
+        }
+
+        SYSTEM_DelayMs(10);
+    }
+}
 #endif
