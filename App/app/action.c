@@ -26,12 +26,15 @@
 #ifdef ENABLE_FLASHLIGHT
     #include "app/flashlight.h"
 #endif
-#ifdef ENABLE_FMRADIO
+#ifdef ENABLE_FMRADIO_EMBEDDED
     #include "app/fm.h"
+#endif
+#ifdef ENABLE_FEAT_F4HWN_OVERLAY_APPS
+    #include "apps/app_overlay.h"
 #endif
 #include "app/scanner.h"
 #include "audio.h"
-#ifdef ENABLE_FMRADIO
+#ifdef ENABLE_FMRADIO_EMBEDDED
     #include "driver/bk1080.h"
 #endif
 #include "driver/bk4819.h"
@@ -57,7 +60,7 @@
 #ifdef ENABLE_FEAT_F4HWN_RXTX_LOG
     #include "app/rxtx_log.h"
 #endif
-#ifdef ENABLE_FEAT_F4HWN_FOXHUNT
+#if defined(ENABLE_FEAT_F4HWN_FOXHUNT) || defined(ENABLE_FEAT_F4HWN_BEACON) || defined(ENABLE_FEAT_F4HWN_OVERLAY_APPS)
     #include "app/foxhunt.h"
 #endif
 #ifdef ENABLE_FEAT_F4HWN_ACTION_PICKER
@@ -75,21 +78,28 @@
 #include "k5viewer.h"
 #endif
 
-#if defined(ENABLE_FMRADIO)
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+//#if defined(ENABLE_FMRADIO)
+#if defined(ENABLE_FEAT_F4HWN_OVERLAY_APPS) && !defined(ENABLE_FEAT_F4HWN_BEAM)
+static void ACTION_Beam(void);
+#endif
+#endif
+
+#if defined(ENABLE_FMRADIO_EMBEDDED)
 static void ACTION_Scan_FM(bool bRestart);
 #endif
 
-#if defined(ENABLE_ALARM) || defined(ENABLE_TX1750)
-static void ACTION_AlarmOr1750(bool b1750);
-inline static void ACTION_Alarm() { ACTION_AlarmOr1750(false); }
-inline static void ACTION_1750() { ACTION_AlarmOr1750(true); };
+#ifdef ENABLE_TX1750
+static void ACTION_1750(void);
 #endif
 
 inline static void ACTION_ScanRestart() { ACTION_Scan(true); };
 
-void (*const action_opt_table[])(void) = {
+void (*const action_opt_table[ACTION_OPT_LEN])(void) = {
     [ACTION_OPT_NONE] = &FUNCTION_NOP,
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     [ACTION_OPT_POWER] = &ACTION_Power,
+#endif
     [ACTION_OPT_MONITOR] = &ACTION_Monitor,
     [ACTION_OPT_SCAN] = &ACTION_ScanRestart,
     [ACTION_OPT_KEYLOCK] = &COMMON_KeypadLockToggle,
@@ -99,46 +109,31 @@ void (*const action_opt_table[])(void) = {
 
 #ifdef ENABLE_FLASHLIGHT
     [ACTION_OPT_FLASHLIGHT] = &ACTION_FlashLight,
-#else
-    [ACTION_OPT_FLASHLIGHT] = &FUNCTION_NOP,
 #endif
 
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
 #ifdef ENABLE_VOX
     [ACTION_OPT_VOX] = &ACTION_Vox,
-#else
-    [ACTION_OPT_VOX] = &FUNCTION_NOP,
+#endif
 #endif
 
 #ifdef ENABLE_FMRADIO
     [ACTION_OPT_FM] = &ACTION_FM,
-#else
-    [ACTION_OPT_FM] = &FUNCTION_NOP,
 #endif
 
-#ifdef ENABLE_ALARM
-    [ACTION_OPT_ALARM] = &ACTION_Alarm,
-#else
-    [ACTION_OPT_ALARM] = &FUNCTION_NOP,
-#endif
-
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
 #ifdef ENABLE_TX1750
     [ACTION_OPT_1750] = &ACTION_1750,
-#else
-    [ACTION_OPT_1750] = &FUNCTION_NOP,
 #endif
-
-#ifdef ENABLE_BLMIN_TMP_OFF
-    [ACTION_OPT_BLMIN_TMP_OFF] = &ACTION_BlminTmpOff,
-#else
-    [ACTION_OPT_BLMIN_TMP_OFF] = &FUNCTION_NOP,
 #endif
 
 #ifdef ENABLE_FEAT_F4HWN
     [ACTION_OPT_RXMODE] = &ACTION_RxMode,
     [ACTION_OPT_MAINONLY] = &ACTION_MainOnly,
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     [ACTION_OPT_PTT] = &ACTION_Ptt,
+#endif
     [ACTION_OPT_WN] = &ACTION_Wn,
-    [ACTION_OPT_BACKLIGHT] = &ACTION_BackLight,
     //#if !defined(ENABLE_SPECTRUM) || !defined(ENABLE_FMRADIO)
         [ACTION_OPT_MUTE] = &ACTION_Mute,
     //#else
@@ -146,25 +141,27 @@ void (*const action_opt_table[])(void) = {
     //#endif
     #ifdef ENABLE_FEAT_F4HWN_AUDIO
         [ACTION_OPT_RXA] = &ACTION_RxA,
-    #else
-        [ACTION_OPT_RXA] = &FUNCTION_NOP,
     #endif
 
+    #ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
         [ACTION_OPT_POWER_HIGH] = &ACTION_Power_High,
         [ACTION_OPT_REMOVE_OFFSET] = &ACTION_Remove_Offset,
     #endif
-#else
-    [ACTION_OPT_RXMODE] = &FUNCTION_NOP,
+    #endif
 #endif
-#ifdef ENABLE_FEAT_F4HWN_BEAM
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+#if defined(ENABLE_FEAT_F4HWN_BEAM) || defined(ENABLE_FEAT_F4HWN_OVERLAY_APPS)
     [ACTION_OPT_BEAM] = &ACTION_Beam,
+#endif
 #endif
 #ifdef ENABLE_FEAT_F4HWN_RXTX_LOG
     [ACTION_OPT_RXTX_LOG] = &ACTION_RxTxLog,
 #endif
-#ifdef ENABLE_FEAT_F4HWN_FOXHUNT
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+#if defined(ENABLE_FEAT_F4HWN_FOXHUNT) || defined(ENABLE_FEAT_F4HWN_OVERLAY_APPS)
     [ACTION_OPT_FOXHUNT] = &ACTION_FoxHunt,
+#endif
 #endif
 #ifdef ENABLE_FEAT_STERANIAN_SPIRITBOX
     [ACTION_OPT_SPIRITBOX] = &ACTION_SpiritBox,
@@ -172,9 +169,51 @@ void (*const action_opt_table[])(void) = {
 #ifdef ENABLE_FEAT_STERANIAN_MEM_RNG_SCAN
     [ACTION_OPT_MEM_RNG_SCN] = &ACTION_MemRangeScan,
 #endif
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+#if defined(ENABLE_FEAT_F4HWN_BEACON) || defined(ENABLE_FEAT_F4HWN_OVERLAY_APPS)
+    [ACTION_OPT_BEACON] = &ACTION_Beacon,
+#endif
+#endif
 };
 
 static_assert(ARRAY_SIZE(action_opt_table) == ACTION_OPT_LEN);
+static_assert(ACTION_OPT_RXTX_LOG == 18);
+static_assert(ACTION_OPT_BEAM == 19);
+static_assert(ACTION_OPT_POWER_HIGH == 20);
+static_assert(ACTION_OPT_REMOVE_OFFSET == 21);
+static_assert(ACTION_OPT_FOXHUNT == 22);
+static_assert(ACTION_OPT_BEACON == 23);
+
+bool ACTION_IsAvailable(uint8_t action)
+{
+    if (action >= ACTION_OPT_LEN || action_opt_table[action] == NULL)
+        return false;
+
+#ifdef ENABLE_FEAT_F4HWN_OVERLAY_APPS
+    switch (action) {
+#ifdef ENABLE_FMRADIO
+        case ACTION_OPT_FM:
+            return (APP_OverlayShortcutMask() & APP_SHORTCUT_FM) != 0;
+#endif
+#ifndef ENABLE_FEAT_F4HWN_FOXHUNT
+        case ACTION_OPT_FOXHUNT:
+            return (APP_OverlayShortcutMask() & APP_SHORTCUT_FOXHUNT) != 0;
+#endif
+#ifndef ENABLE_FEAT_F4HWN_BEACON
+        case ACTION_OPT_BEACON:
+            return (APP_OverlayShortcutMask() & APP_SHORTCUT_BEACON) != 0;
+#endif
+#ifndef ENABLE_FEAT_F4HWN_BEAM
+        case ACTION_OPT_BEAM:
+            return (APP_OverlayShortcutMask() & APP_SHORTCUT_BEAM) != 0;
+#endif
+        default:
+            break;
+    }
+#endif
+
+    return true;
+}
 
 void ACTION_Power(void)
 {
@@ -221,7 +260,7 @@ void ACTION_Monitor(void)
 
     RADIO_SetupRegisters(true);
 
-#ifdef ENABLE_FMRADIO
+#ifdef ENABLE_FMRADIO_EMBEDDED
     if (gFmRadioMode) {
         FM_Start();
         gRequestDisplayScreen = DISPLAY_FM;
@@ -235,7 +274,7 @@ void ACTION_Scan(bool bRestart)
 {
     (void)bRestart;
 
-#ifdef ENABLE_FMRADIO
+#ifdef ENABLE_FMRADIO_EMBEDDED
     if (gFmRadioMode) {
         ACTION_Scan_FM(bRestart);
         return;
@@ -328,7 +367,7 @@ void ACTION_SwitchDemodul(void)
 }
 
 
-#ifdef ENABLE_FMRADIO
+#ifdef ENABLE_FMRADIO_EMBEDDED
 inline static bool ACTION_IsBlockedInFM(uint8_t action)
 {
     switch (action) {
@@ -352,10 +391,10 @@ inline static bool ACTION_IsBlockedInFM(uint8_t action)
         case ACTION_OPT_REMOVE_OFFSET:
     #endif
 #endif
-#ifdef ENABLE_FEAT_F4HWN_BEAM
+#if defined(ENABLE_FEAT_F4HWN_BEAM) || defined(ENABLE_FEAT_F4HWN_OVERLAY_APPS)
         case ACTION_OPT_BEAM:
 #endif
-#ifdef ENABLE_FEAT_F4HWN_FOXHUNT
+#if defined(ENABLE_FEAT_F4HWN_FOXHUNT) || defined(ENABLE_FEAT_F4HWN_OVERLAY_APPS)
         case ACTION_OPT_FOXHUNT:
 #endif
 
@@ -365,6 +404,9 @@ inline static bool ACTION_IsBlockedInFM(uint8_t action)
 #ifdef ENABLE_FEAT_STERANIAN_MEM_RNG_SCAN
         case ACTION_OPT_MEM_RNG_SCN:
 #endif
+#if defined(ENABLE_FEAT_F4HWN_BEACON) || defined(ENABLE_FEAT_F4HWN_OVERLAY_APPS)
+        case ACTION_OPT_BEACON:
+#endif
             return true;
 
         default:
@@ -373,15 +415,14 @@ inline static bool ACTION_IsBlockedInFM(uint8_t action)
 }
 #endif
 
-#ifdef ENABLE_FEAT_F4HWN_ACTION_PICKER
 static void ACTION_Execute(uint8_t action)
 {
-    if (action >= ACTION_OPT_LEN || action_opt_table[action] == NULL) {
+    if (!ACTION_IsAvailable(action)) {
         gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
         return;
     }
 
-#ifdef ENABLE_FMRADIO
+#ifdef ENABLE_FMRADIO_EMBEDDED
     if (gFmRadioMode && ACTION_IsBlockedInFM(action)) {
         gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
         return;
@@ -392,6 +433,7 @@ static void ACTION_Execute(uint8_t action)
     action_opt_table[action]();
 }
 
+#ifdef ENABLE_FEAT_F4HWN_ACTION_PICKER
 uint8_t gActionPickerKey;
 uint8_t gActionPickerSelection[2] = {1, 1};
 uint8_t gActionPickerTimeout_500ms;
@@ -521,26 +563,54 @@ void ACTION_Handle(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
     }
 
     // held or released after short press
-#ifdef ENABLE_FEAT_F4HWN_ACTION_PICKER
     ACTION_Execute(func);
-#else
-    gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
-    
-#ifdef ENABLE_FMRADIO
-    if (gFmRadioMode && ACTION_IsBlockedInFM(func)) {
+}
+
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+#if defined(ENABLE_FEAT_F4HWN_OVERLAY_APPS) && !defined(ENABLE_FEAT_F4HWN_BEAM)
+static void ACTION_Beam(void)
+{
+    if (APP_LaunchOverlayShortcut(APP_SHORTCUT_BEAM) != APP_OK)
         gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
-        return;
-    }
+}
+#endif
 #endif
 
-    action_opt_table[func]();
+#if defined(ENABLE_FEAT_F4HWN_FOXHUNT) || defined(ENABLE_FEAT_F4HWN_OVERLAY_APPS)
+void ACTION_FoxHunt(void)
+{
+#ifdef ENABLE_FEAT_F4HWN_FOXHUNT
+    APP_RunFoxHunt();
+    GUI_SelectNextDisplay(DISPLAY_MAIN);
+#else
+    if (APP_LaunchOverlayShortcut(APP_SHORTCUT_FOXHUNT) != APP_OK)
+        gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
 #endif
 }
+#endif
+
+#if defined(ENABLE_FEAT_F4HWN_BEACON) || defined(ENABLE_FEAT_F4HWN_OVERLAY_APPS)
+void ACTION_Beacon(void)
+{
+#ifdef ENABLE_FEAT_F4HWN_BEACON
+    APP_RunBeacon();
+    GUI_SelectNextDisplay(DISPLAY_MAIN);
+#else
+    if (APP_LaunchOverlayShortcut(APP_SHORTCUT_BEACON) != APP_OK)
+        gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+#endif
+}
+#endif
 
 
 #ifdef ENABLE_FMRADIO
 void ACTION_FM(void)
 {
+#ifdef ENABLE_FEAT_F4HWN_OVERLAY_APPS
+    if (APP_LaunchOverlayShortcut(APP_SHORTCUT_FM) != APP_OK)
+        gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+    return;
+#else
     if (gCurrentFunction != FUNCTION_TRANSMIT && gCurrentFunction != FUNCTION_MONITOR)
     {
         gInputBoxIndex = 0;
@@ -553,6 +623,14 @@ void ACTION_FM(void)
 #ifdef ENABLE_VOX
             gVoxResumeCountdown = 80;
 #endif
+            return;
+        }
+
+        // Do not start broadcast FM while a VFO reception is already active.
+        // Keeping this check after the block above ensures EXIT can still
+        // turn FM off if the UI ever reaches DISPLAY_MAIN with FM mode active.
+        if (FUNCTION_IsRx()) {
+            gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
             return;
         }
 
@@ -571,8 +649,10 @@ void ACTION_FM(void)
 
         gRequestDisplayScreen = DISPLAY_FM;
     }
+#endif  /* !ENABLE_FEAT_F4HWN_OVERLAY_APPS */
 }
 
+#ifdef ENABLE_FMRADIO_EMBEDDED
 static void ACTION_Scan_FM(bool bRestart)
 {
     if (FUNCTION_IsRx())
@@ -612,40 +692,24 @@ static void ACTION_Scan_FM(bool bRestart)
 #endif
 
 }
+#endif
 
 #endif
 
 
-#if defined(ENABLE_ALARM) || defined(ENABLE_TX1750)
-static void ACTION_AlarmOr1750(const bool b1750)
+#ifdef ENABLE_TX1750
+static void ACTION_1750(void)
 {
-
     if(gEeprom.KEY_LOCK && (gSetting_set_lck & SET_LCK_PTT))
         return;
 
-    #if defined(ENABLE_ALARM)
-        const AlarmState_t alarm_mode = (gEeprom.ALARM_MODE == ALARM_MODE_TONE) ? ALARM_STATE_TXALARM : ALARM_STATE_SITE_ALARM;
-        gAlarmRunningCounter = 0;
-    #endif
-
-    #if defined(ENABLE_ALARM) && defined(ENABLE_TX1750)
-        gAlarmState = b1750 ? ALARM_STATE_TX1750 : alarm_mode;
-    #elif defined(ENABLE_ALARM)
-        gAlarmState = alarm_mode;
-    #else
-        gAlarmState = ALARM_STATE_TX1750;
-    #endif
-
-    (void)b1750;
+    gTx1750Active = true;
     gInputBoxIndex = 0;
-
-    gFlagPrepareTX = gAlarmState != ALARM_STATE_OFF;
+    gFlagPrepareTX = true;
 
     if (gScreenToDisplay != DISPLAY_MENU)     // 1of11 .. don't close the menu
         gRequestDisplayScreen = DISPLAY_MAIN;
 }
-
-
 #endif
 
 #ifdef ENABLE_VOX
@@ -659,18 +723,6 @@ void ACTION_Vox(void)
     #ifdef ENABLE_VOICE
         gAnotherVoiceID  = VOICE_ID_VOX;
     #endif
-}
-#endif
-
-#ifdef ENABLE_BLMIN_TMP_OFF
-void ACTION_BlminTmpOff(void)
-{
-    if(++gEeprom.BACKLIGHT_MIN_STAT == BLMIN_STAT_UNKNOWN) {
-        gEeprom.BACKLIGHT_MIN_STAT = BLMIN_STAT_ON;
-        BACKLIGHT_SetBrightness(gEeprom.BACKLIGHT_MIN);
-    } else {
-        BACKLIGHT_SetBrightness(0);
-    }
 }
 #endif
 
@@ -758,11 +810,7 @@ void ACTION_Wn(void)
         }
     #endif
 
-    #ifdef ENABLE_AM_FIX
-        BK4819_SetFilterBandwidth(bw, true);
-    #else
-        BK4819_SetFilterBandwidth(bw, false);
-    #endif
+    BK4819_SetFilterBandwidth(bw, false);
 }
 
 void ACTION_BackLight(void)
@@ -804,7 +852,7 @@ void ACTION_Mute(void)
     gMute = !gMute;
 
     // Update the registers
-    #ifdef ENABLE_FMRADIO
+    #ifdef ENABLE_FMRADIO_EMBEDDED
         BK1080_WriteRegister(BK1080_REG_05_SYSTEM_CONFIGURATION2, gMute ? 0x0A10 : 0x0A1F);
     #endif
     gEeprom.VOLUME_GAIN = gMute ? 0 : gEeprom.VOLUME_GAIN_BACKUP;
@@ -834,7 +882,7 @@ void ACTION_Remove_Offset(void)
 #ifdef ENABLE_FEAT_STERANIAN_MEM_RNG_SCAN
 void ACTION_MemRangeScan(void)
 {
-#ifdef ENABLE_FMRADIO
+#ifdef ENABLE_FMRADIO_EMBEDDED
     if (gFmRadioMode) return;
 #endif
 
@@ -843,7 +891,7 @@ void ACTION_MemRangeScan(void)
         return;
     }
 
-    uint16_t pairs[16][2]; // [最大16ペアまで][0=開始CH, 1=終了CH] 
+    uint16_t pairs[32][2]; // [最大32ペアまで][0=開始CH, 1=終了CH] 
     uint8_t count = 0;
     uint8_t selected = 0;
     uint16_t first_ch = 0xFFFF;
@@ -852,7 +900,7 @@ void ACTION_MemRangeScan(void)
     uint8_t target_list = gEeprom.MEM_RNG_SCN_LIST;
 
     // 1. スキャンリストに属する有効なチャンネルを順に走査しペアを生成
-    for (uint16_t i = 0; i < MR_CHANNELS_MAX && count < 16; i++) {
+    for (uint16_t i = 0; i < MR_CHANNELS_MAX && count < 32; i++) {
         if (RADIO_CheckValidChannel(i, true, target_list)) {
             if (first_ch == 0xFFFF) {
                 first_ch = i;
@@ -860,7 +908,7 @@ void ACTION_MemRangeScan(void)
                 pairs[count][0] = first_ch;
                 pairs[count][1] = i;
                 count++;
-                first_ch = 0xFFFF; // リセット
+                first_ch = 0xFFFF;
             }
         }
     }
@@ -886,7 +934,7 @@ void ACTION_MemRangeScan(void)
     // 開始時に一度だけステータス行を最新状態に強制上書き描画
     UI_DisplayStatus();
 
-    // 2. インタラクティブUIループ
+    // UIループ
     while (isRunning) {
 #if defined(ENABLE_UART) || defined(ENABLE_USB)
         UART_ServiceCommands();
@@ -910,8 +958,7 @@ void ACTION_MemRangeScan(void)
                 sprintf(name, "RANGE %02u", selected + 1);
             }
 
-            // 画面描画の配置（gFrameBuffer[0..6] のみ。ステータス行は液晶に残したままにする）
-            
+            // 画面描画の配置（gFrameBuffer[0..6] のみ。ステータス行は液晶に残したままにする）            
             // Line 1 (gFrameBuffer[0]): タイトルを左側、インデックスを右側に配置
             UI_PrintStringSmallBold("SCAN RANGE", 2, 0, 0);
             sprintf(str, "%d/%d", selected + 1, count);

@@ -16,7 +16,7 @@
 
 #include "scheduler.h"
 #include "app/chFrScanner.h"
-#ifdef ENABLE_FMRADIO
+#ifdef ENABLE_FMRADIO_EMBEDDED
     #include "app/fm.h"
 #endif
 #include "app/scanner.h"
@@ -63,15 +63,6 @@ void SysTick_Handler(void)
 #endif
         
         DECREMENT_AND_TRIGGER(gTxTimerCountdown_500ms, gTxTimeoutReached);
-
-        /*/////
-        // ★修正：タイムアウト時に gChirpSessionActive も解除する
-        if (gSerialConfigCountDown_500ms > 0) {
-            if (--gSerialConfigCountDown_500ms == 0) {
-                gChirpActive = false; // 通信終了でK5Viewerのロック解除
-            }
-        }
-        */
 
         DECREMENT(gSerialConfigCountDown_500ms);
     }
@@ -146,7 +137,7 @@ void SysTick_Handler(void)
     DECREMENT_AND_TRIGGER(gCountdownToPlayNextVoice_10ms, gFlagPlayQueuedVoice);
 #endif
 
-#ifdef ENABLE_FMRADIO
+#ifdef ENABLE_FMRADIO_EMBEDDED
     if (gFM_ScanState != FM_SCAN_OFF && gCurrentFunction != FUNCTION_MONITOR)
         if (gCurrentFunction != FUNCTION_TRANSMIT && gCurrentFunction != FUNCTION_RECEIVE)
             DECREMENT_AND_TRIGGER(gFmPlayCountdown_10ms, gScheduleFM);

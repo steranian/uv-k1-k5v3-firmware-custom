@@ -76,9 +76,6 @@ enum
     MENU_S_PRI,
     MENU_S_PRI_CH_1,
     MENU_S_PRI_CH_2,    
-#ifdef ENABLE_ALARM
-    MENU_AL_MOD,
-#endif
 #ifdef ENABLE_DTMF_CALLING
     MENU_ANI_ID,
 #endif
@@ -109,9 +106,6 @@ enum
     MENU_VOL,
     MENU_BAT_TXT,
     MENU_AM,
-#ifdef ENABLE_AM_FIX
-    MENU_AM_FIX,
-#endif
 #ifndef ENABLE_FEAT_F4HWN
     #ifdef ENABLE_NOAA
         MENU_NOAA_S,
@@ -161,6 +155,9 @@ enum
         MENU_NOAA_S,
     #endif
     MENU_SET_NAV,
+    #ifdef ENABLE_FEAT_F4HWN_MULTIBOOT
+        MENU_SET_CFG,
+    #endif
     #ifdef ENABLE_FEAT_F4HWN_AUDIO
         MENU_SET_AUD,
     #endif
@@ -227,9 +224,6 @@ extern const char* const            gSubMenu_RXMode[4];
     extern const char* const        gSubMenu_VOICE[3];
 #endif
 extern const char* const            gSubMenu_MDF[4];
-#ifdef ENABLE_ALARM
-    extern const char* const        gSubMenu_AL_MOD[2];
-#endif
 #ifdef ENABLE_DTMF_CALLING
 extern const char* const            gSubMenu_D_RSP[4];
 #endif

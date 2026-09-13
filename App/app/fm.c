@@ -33,6 +33,7 @@
 #include "ui/ui.h"
 
 uint16_t          gFM_Channels[FM_CHANNELS_MAX];
+#ifdef ENABLE_FMRADIO_EMBEDDED
 bool              gFmRadioMode;
 uint8_t           gFmRadioCountdown_500ms;
 volatile uint16_t gFmPlayCountdown_10ms;
@@ -52,10 +53,11 @@ const uint8_t BUTTON_EVENT_HELD = BUTTON_STATE_PRESSED | BUTTON_STATE_HELD;
 const uint8_t BUTTON_EVENT_SHORT =  0;
 const uint8_t BUTTON_EVENT_LONG =  BUTTON_STATE_HELD;
 
-
 static void Key_FUNC(KEY_Code_t Key, uint8_t state);
+#endif
 
-#ifdef ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME
+#if defined(ENABLE_FMRADIO_EMBEDDED) && defined(ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME)
+//#ifdef ENABLE_FEAT_STERANIAN_DISP_RADIOSTATION_NAME
 FmStationIdx_t gFmStationList[100]; // FM局名は100個までとした
 
 void FM_LoadStationNames(void)
@@ -70,7 +72,7 @@ void FM_LoadStationNames(void)
     // 一括読み込み用のバッファ（32チャンネル分 = 64バイト）
     ChannelAttributes_t attr_buf[32];
     
-    // 1024チャンネルを、32チャンネルずつの塊(チャンク)で処理する
+    // 1024チャンネルを、32チャンネルずつの塊で処理する
     for (uint16_t chunk = 0; chunk < MR_CHANNELS_MAX; chunk += 32) {
         
         // 0x008000 が属性データのベースアドレス。32chを一気に読み込む
@@ -142,6 +144,7 @@ int FM_ConfigureChannelState(void)
     return 0;
 }
 
+#ifdef ENABLE_FMRADIO_EMBEDDED
 void FM_SetFrequency(void)
 {
     BK1080_SetFrequency(gEeprom.FM_FrequencyPlaying, gEeprom.FM_Band/*, gEeprom.FM_Space*/);
@@ -244,6 +247,7 @@ void FM_PlayAndUpdate(void)
     BACKLIGHT_TurnOn();
     FM_AudioPathOn();
 }
+#endif
 
 int FM_CheckFrequencyLock(uint16_t Frequency, uint16_t LowerLimit)
 {
@@ -288,6 +292,7 @@ int FM_CheckFrequencyLock(uint16_t Frequency, uint16_t LowerLimit)
     return 0;
 }
 
+#ifdef ENABLE_FMRADIO_EMBEDDED
 static void Key_DIGITS(KEY_Code_t Key, uint8_t state)
 {
     enum { STATE_FREQ_MODE, STATE_MR_MODE, STATE_SAVE };
@@ -715,5 +720,6 @@ void FM_Start(void)
         SETTINGS_WriteCurrentState();
     #endif
 }
+#endif
 
 #endif

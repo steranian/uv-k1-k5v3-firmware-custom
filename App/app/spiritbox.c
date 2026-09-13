@@ -235,7 +235,7 @@ void APP_RunSpiritBox(void)
         
         // --- テキスト描画 ---
         //UI_PrintStringSmallBold("UV SPIRIT BOX", 32, 0, 0);
-        UI_PrintStringSmallBold("UV SPIRIT BOX", 0, 0, 0);
+        UI_PrintStringSmallBold("SPIRIT BOX", 0, 0, 0);
 
         char str[16];
         
