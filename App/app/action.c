@@ -452,9 +452,9 @@ bool ACTION_PickerProcessKey(KEY_Code_t key, bool isPressed, bool isHeld)
             if (isPressed && !isHeld) {
                 if (key == KEY_UP) {
                     if (--*selection == 0)
-                        *selection = gSubMenu_SIDEFUNCTIONS_size - 1;
+                        *selection = SIDEFUNCTION_COUNT - 1;
                 }
-                else if (++*selection >= gSubMenu_SIDEFUNCTIONS_size) {
+                else if (++*selection >= SIDEFUNCTION_COUNT) {
                     *selection = 1;
                 }
 
@@ -465,7 +465,7 @@ bool ACTION_PickerProcessKey(KEY_Code_t key, bool isPressed, bool isHeld)
 
         case KEY_MENU:
             if (!isPressed && !isHeld) {
-                const uint8_t action = gSubMenu_SIDEFUNCTIONS[*selection].id;
+                const uint8_t action = *selection;
                 gActionPickerKey = 0;
                 gUpdateDisplay = true;
                 ACTION_Execute(action);
@@ -580,6 +580,9 @@ static void ACTION_Beam(void)
 void ACTION_FoxHunt(void)
 {
 #ifdef ENABLE_FEAT_F4HWN_FOXHUNT
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    return;
+#endif
     APP_RunFoxHunt();
     GUI_SelectNextDisplay(DISPLAY_MAIN);
 #else
@@ -593,6 +596,9 @@ void ACTION_FoxHunt(void)
 void ACTION_Beacon(void)
 {
 #ifdef ENABLE_FEAT_F4HWN_BEACON
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    return;
+#endif
     APP_RunBeacon();
     GUI_SelectNextDisplay(DISPLAY_MAIN);
 #else
@@ -734,8 +740,40 @@ void ACTION_Update(void)
     gUpdateStatus        = true;
 }
 
+#ifdef ENABLE_FEAT_F4HWN_FULL_WATCH
+uint8_t ACTION_GetRxMode(void)
+{
+    if (gEeprom.DUAL_WATCH == DUAL_WATCH_FULL)
+        return gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_OFF ? 4 : 5;
+
+    return (gEeprom.DUAL_WATCH != DUAL_WATCH_OFF) +
+           (gEeprom.CROSS_BAND_RX_TX != CROSS_BAND_OFF) * 2;
+}
+
+void ACTION_SetRxMode(uint8_t mode)
+{
+    const uint8_t selected = gEeprom.TX_VFO + 1u;
+    bool crossBand;
+    if (mode >= 4)
+    {
+        gEeprom.DUAL_WATCH = DUAL_WATCH_FULL;
+        crossBand = mode == 5;
+    }
+    else
+    {
+        gEeprom.DUAL_WATCH = selected * (mode & 1);
+        crossBand = (mode & 2) != 0;
+    }
+    gEeprom.CROSS_BAND_RX_TX = crossBand ? selected : CROSS_BAND_OFF;
+}
+#endif
+
 void ACTION_RxMode(void)
 {
+#ifdef ENABLE_FEAT_F4HWN_FULL_WATCH
+    uint8_t mode = ACTION_GetRxMode() + 1;
+    ACTION_SetRxMode(mode < 6 ? mode : 0);
+#else
     static bool cycle = 0;
 
     if (cycle) {
@@ -745,6 +783,8 @@ void ACTION_RxMode(void)
     }
 
     cycle = !cycle;
+#endif
+
     ACTION_Update();
 }
 
