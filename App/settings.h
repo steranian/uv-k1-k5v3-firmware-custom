@@ -134,11 +134,12 @@ enum ACTION_OPT_t {
     ACTION_OPT_REMOVE_OFFSET  = 21,
     ACTION_OPT_FOXHUNT        = 22,
     ACTION_OPT_BEACON         = 23,
+    ACTION_OPT_TONECALL       = 24,
 
-    ACTION_OPT_SPIRITBOX      = 24,
-    ACTION_OPT_MEM_RNG_SCN    = 25,
+    ACTION_OPT_SPIRITBOX      = 25,
+    ACTION_OPT_MEM_RNG_SCN    = 26,
 
-    ACTION_OPT_LEN            = 26
+    ACTION_OPT_LEN            = 27
 };
 
 #ifdef ENABLE_VOICE
