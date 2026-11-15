@@ -308,9 +308,7 @@ void UI_DisplayStatus()
 
 #ifdef ENABLE_FEAT_F4HWN
     // PTT indicator
-//#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
-    // nothing to do
-//#else
+#ifndef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
     if(!gAirCopyBootMode) {
         const void *src = gSetting_set_ptt_session
                         ? (const void *)gFontPttOnePush
@@ -320,6 +318,7 @@ void UI_DisplayStatus()
         x1 = x + sizeof(gFontPttClassic) + 1u;
     }
     x += sizeof(gFontPttClassic) + 5u;
+#endif
 #endif
 
     x = MAX(x1, 69u);

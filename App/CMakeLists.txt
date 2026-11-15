@@ -335,6 +335,8 @@ enable_feature(ENABLE_FEAT_STERANIAN_SPIRITBOX)
 enable_feature(ENABLE_FEAT_STERANIAN_MEM_RNG_SCAN)
 # ---- Factory Reset F2+PTT 20 sec ---
 enable_feature(ENABLE_FEAT_STERANIAN_BOOT_RESET)
+# ---- Mute in Sleep ----
+enable_feature(ENABLE_FEAT_STERANIAN_SLEEPMUTE)
 
 # ---- DEBUGGING ----
 

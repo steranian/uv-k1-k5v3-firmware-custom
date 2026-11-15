@@ -210,51 +210,6 @@ uint16_t BK4819_ReadRegister(BK4819_REGISTER_t Register)
 
 void BK4819_WriteRegister(BK4819_REGISTER_t Register, uint16_t Data)
 {
-#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
-    switch (Register) {
-        case BK4819_REG_30:
-            // 送信系のビットを強制OFF
-            // PA_GAIN(電力増幅), TX_DSP(送信信号処理), MIC_ADC(音声入力)
-            Data &= ~(BK4819_REG_30_ENABLE_PA_GAIN | 
-                      BK4819_REG_30_ENABLE_TX_DSP | 
-                      BK4819_REG_30_ENABLE_MIC_ADC);
-            break;
-
-        case BK4819_REG_36:
-            // 送信時の周波数偏移（偏差）を強制的にゼロにする
-            // 万が一PAが動いても変調が乗らなくなる
-            Data = 0; 
-            break;
-
-        case BK4819_REG_51:
-            // 送信用シリアルインターフェースや追加のPA制御
-            // 送信に関わるデジタルブロックを無効化
-            Data &= ~0x0001; // TX_EN ビットなどの無効化
-            break;
-
-        case BK4819_REG_29:
-            // TX信号のパス選択
-            // 送信用DACへの入力を遮断
-            Data &= ~0x0030; 
-            break;
-
-        case BK4819_REG_3F:
-            // PA（パワーアンプ）の出力ランプ制御
-            // 出力波形の上昇特性をゼロに固定し、物理的な出力を阻止
-            Data = 0;
-            break;
-
-        case BK4819_REG_02:
-            // 送信/受信のモード切り替えレジスタ
-            // もし「送信モード(TX)」を指すビットが書き込まれようとしたら強制的に「受信モード」へ
-            Data &= ~0x0001; 
-            break;
-
-        default:
-            break;
-    }
-#endif
-
     CS_Release();
     SCL_Reset();
 
@@ -448,6 +403,13 @@ int16_t BK4819_GetRSSI_dBm(void)
 
 void BK4819_ToggleGpioOut(BK4819_GPIO_PIN_t Pin, bool bSet)
 {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    // PA有効化ピン(PIN29)のON要求を無効化
+    if (Pin == BK4819_GPIO1_PIN29_PA_ENABLE) {
+        bSet = false;
+    }
+#endif
+
     if (bSet)
         gBK4819_GpioOutState |=  (0x40u >> Pin);
     else

@@ -433,6 +433,13 @@ int16_t BK4819_GetRSSI_dBm(void)
 
 void BK4819_ToggleGpioOut(BK4819_GPIO_PIN_t Pin, bool bSet)
 {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    // PA有効化ピン(PIN29)のON要求を強制遮断
+    if (Pin == BK4819_GPIO1_PIN29_PA_ENABLE) {
+        bSet = false;
+    }
+#endif
+
     if (bSet)
         gBK4819_GpioOutState |=  (0x40u >> Pin);
     else
@@ -728,6 +735,10 @@ void BK4819_SetFilterBandwidth(const BK4819_FilterBandwidth_t Bandwidth, const b
 
 void BK4819_SetupPowerAmplifier(const uint8_t bias, const uint32_t frequency)
 {
+#ifdef ENABLE_FEAT_STERANIAN_RECEIVE_ONLY_MODE
+    return;
+#endif
+
     // REG_36 <15:8> 0 PA Bias output 0 ~ 3.2V
     //               255 = 3.2V
     //                 0 = 0V

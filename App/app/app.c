@@ -803,9 +803,16 @@ void APP_StartListening(FUNCTION_Type_t function)
     // clear the other vfo's rssi level (to hide the antenna symbol)
     gVFO_RSSI_bar_level[!vfo] = 0;
 
+#ifdef ENABLE_FEAT_STERANIAN_SLEEPMUTE
+    // ★ スリープ中（gWakeUp == true）は音声アンプをONにしない
+    if (!gWakeUp) {
+        AUDIO_AudioPathOn();
+        gEnableSpeaker = true;
+    }
+#else
     AUDIO_AudioPathOn();
     gEnableSpeaker = true;
-
+#endif
     if (gSetting_backlight_on_tx_rx & BACKLIGHT_ON_TR_RX) {
         BACKLIGHT_TurnOn();
     }
@@ -2166,6 +2173,21 @@ void APP_TimeSlice500ms(void)
         gWakeUp = false;
         gUpdateDisplay = true;
         gUpdateStatus = true;
+
+        // ★ 復帰時の音声アンプ・FMラジオミュート解除処理
+    #ifdef ENABLE_FEAT_STERANIAN_SLEEPMUTE
+        if (gFmRadioMode) {
+    #ifdef ENABLE_FMRADIO
+            BK1080_Mute(false);
+    #endif
+            AUDIO_AudioPathOn();
+            gEnableSpeaker = true;
+        } else {
+            RADIO_SetModulation(gRxVfo->Modulation); // BK4829のAFミュート解除
+            AUDIO_AudioPathOn();                      // 音声アンプON
+            gEnableSpeaker = true;
+        }
+    #endif
     }
 
     if(gCurrentFunction != FUNCTION_TRANSMIT && !FUNCTION_IsRx()
@@ -2188,6 +2210,19 @@ void APP_TimeSlice500ms(void)
             // PWM_PLUS0_CH0_COMP = 0;
             BACKLIGHT_SetBrightness(0);
             ST7565_ShutDown();
+
+#ifdef ENABLE_FEAT_STERANIAN_SLEEPMUTE
+            // ★ スリープ進入時の消音処理（音声アンプOFF & FMミュート）
+            AUDIO_AudioPathOff();
+            gEnableSpeaker = false;
+            BK4819_SetAF(BK4819_AF_MUTE);
+    #ifdef ENABLE_FMRADIO
+            if (gFmRadioMode) {
+                BK1080_Mute(true);
+            }
+    #endif
+#endif
+
         }
         else if(gSleepModeCountdown_500ms != 0 && gSleepModeCountdown_500ms < 21 && gSetting_set_off != 0)
         {
